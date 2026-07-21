@@ -5,67 +5,75 @@ import Header from '@/components/Header';
 import Thumbnails from '@/components/Thumbnails';
 import Viewer from '@/components/Viewer';
 import ShareModal from '@/components/ShareModal';
-import { initialPapers, getPaperFromDB } from '@/lib/data';
+import { getPaperFromDB, Newspaper } from '@/lib/data';
 
-export default function HomePage() {
-  const [selectedDate, setSelectedDate] = useState("2026-07-21");
+export default function Home() {
+  const [selectedDate, setSelectedDate] = useState('2026-07-21');
   const [currentPage, setCurrentPage] = useState(1);
+  const [paper, setPaper] = useState<Newspaper | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [pages, setPages] = useState<{ pageNumber: number; imageUrl: string }[]>(initialPapers[0].pages);
 
+  // Fetch paper from Supabase cloud on date change
   useEffect(() => {
     async function loadPaper() {
-      try {
-        const dbPaper = await getPaperFromDB(selectedDate);
-        if (dbPaper && dbPaper.pages && dbPaper.pages.length > 0) {
-          setPages(dbPaper.pages);
-        } else {
-          const defaultPaper = initialPapers.find(p => p.date === selectedDate) || initialPapers[0];
-          setPages(defaultPaper.pages);
-        }
-      } catch (err) {
-        console.error("Error reading IndexedDB", err);
-      }
+      setLoading(true);
+      const data = await getPaperFromDB(selectedDate);
+      setPaper(data);
+      setCurrentPage(1);
+      setLoading(false);
     }
     loadPaper();
   }, [selectedDate]);
 
-  const activePageObj = pages.find(p => p.pageNumber === currentPage) || pages[0] || { imageUrl: '', pageNumber: 1 };
+  const totalPages = paper?.pages.length || 1;
+  const currentImageUrl = paper?.pages[currentPage - 1]?.imageUrl || paper?.pages[0]?.imageUrl || '';
 
   return (
-    <div className="min-h-screen bg-slate-200 text-slate-800 flex flex-col items-center p-2 sm:p-4">
+    <main className="min-h-screen bg-slate-200 flex flex-col items-center p-3 sm:p-6 font-sans">
       
+      {/* Top Controls Header */}
       <Header 
         selectedDate={selectedDate}
-        setSelectedDate={(d) => {
-          setSelectedDate(d);
-          setCurrentPage(1);
-        }}
+        setSelectedDate={setSelectedDate}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
-        totalPages={pages.length}
+        totalPages={totalPages}
         onOpenShare={() => setIsShareOpen(true)}
       />
 
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-12 gap-4">
-        <Thumbnails 
-          pages={pages} 
-          currentPage={currentPage} 
-          setCurrentPage={setCurrentPage} 
-        />
+      {/* Main E-Paper Viewer & Sidebar Layout */}
+      {loading ? (
+        <div className="w-full max-w-6xl h-[70vh] flex flex-col items-center justify-center bg-white rounded-2xl shadow-xl border border-slate-200">
+          <div className="w-12 h-12 border-4 border-emerald-700 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-600 font-bold animate-pulse">Loading Newspaper from Cloud Database...</p>
+        </div>
+      ) : (
+        <div className="w-full max-w-6xl flex flex-col md:flex-row gap-4 items-start">
+          
+          {/* Left Thumbnails List */}
+          <Thumbnails 
+            pages={paper?.pages || []}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
 
-        <Viewer 
-          imageUrl={activePageObj.imageUrl} 
-          currentPage={currentPage} 
-          totalPages={pages.length} 
-        />
-      </div>
+          {/* Center Main Newspaper Paper Canvas */}
+          <Viewer 
+            imageUrl={currentImageUrl}
+            currentPage={currentPage}
+            totalPages={totalPages}
+          />
+        </div>
+      )}
 
+      {/* Share Modal Popup */}
       <ShareModal 
-        isOpen={isShareOpen} 
-        onClose={() => setIsShareOpen(false)} 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        selectedDate={selectedDate}
       />
 
-    </div>
+    </main>
   );
 }

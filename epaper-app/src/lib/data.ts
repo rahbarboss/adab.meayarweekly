@@ -1,3 +1,10 @@
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = 'https://ijypmnbsslabfnqltmbn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXBtbmJzc2xhYmZucWx0bWJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjY1NzEsImV4cCI6MjEwMDIwMjU3MX0.yHBTVP2A0BAYDSK81cYKqxM7d22Iw_8b714K8wZJv1Y';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 export interface NewspaperPage {
   pageNumber: number;
   imageUrl: string;
@@ -5,91 +12,92 @@ export interface NewspaperPage {
 
 export interface Newspaper {
   id?: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   pages: NewspaperPage[];
 }
 
-export const initialPapers: Newspaper[] = [
-  {
-    id: "1",
-    date: "2026-07-21",
-    pages: [
-      { pageNumber: 1, imageUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&auto=format&fit=crop" },
-      { pageNumber: 2, imageUrl: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&auto=format&fit=crop" },
-      { pageNumber: 3, imageUrl: "https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=1200&auto=format&fit=crop" }
-    ]
-  }
-];
-
-// --- INDEXEDDB UNLIMITED STORAGE FUNCTIONS --- //
-
-const DB_NAME = 'EpaperDB';
-const STORE_NAME = 'newspapers';
-
-export const initDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'date' });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+// Default dummy newspaper if database is empty
+const defaultPaper: Newspaper = {
+  date: '2026-07-21',
+  pages: [
+    { pageNumber: 1, imageUrl: 'https://placehold.co/800x1130/065f46/ffffff?text=Adab+e+Meayar+Page+1' },
+    { pageNumber: 2, imageUrl: 'https://placehold.co/800x1130/1e293b/ffffff?text=Adab+e+Meayar+Page+2' },
+    { pageNumber: 3, imageUrl: 'https://placehold.co/800x1130/0f172a/ffffff?text=Adab+e+Meayar+Page+3' }
+  ]
 };
 
-// Save Heavy Newspaper Images
+// Save or Update Paper in Supabase Cloud
 export const savePaperToDB = async (paperData: { date: string; pages: { pageNumber: number; imageUrl: string }[] }) => {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(paperData);
+  const { data, error } = await supabase
+    .from('newspapers')
+    .upsert([{ date: paperData.date, pages: paperData.pages }], { onConflict: 'date' });
 
-    request.onsuccess = () => resolve(true);
-    request.onerror = () => reject(request.error);
-  });
+  if (error) {
+    console.error("Supabase Save Error:", error);
+    throw error;
+  }
+  return data;
 };
 
-// Fetch Paper By Date
-export const getPaperFromDB = async (date: string): Promise<any> => {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(date);
+// Fetch Newspaper by Date from Supabase Cloud
+export const getPaperFromDB = async (date: string): Promise<Newspaper> => {
+  try {
+    const { data, error } = await supabase
+      .from('newspapers')
+      .select('*')
+      .eq('date', date)
+      .maybeSingle();
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+    if (error) {
+      console.error("Supabase Fetch Error:", error);
+      return { ...defaultPaper, date };
+    }
+
+    if (data) {
+      return data as Newspaper;
+    }
+
+    return { ...defaultPaper, date };
+  } catch (err) {
+    console.error("Fetch Exception:", err);
+    return { ...defaultPaper, date };
+  }
 };
 
-// Get All Uploaded Papers List
+// Fetch All Papers List from Supabase Cloud
 export const getAllPapersFromDB = async (): Promise<Newspaper[]> => {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
+  try {
+    const { data, error } = await supabase
+      .from('newspapers')
+      .select('*')
+      .order('date', { ascending: false });
 
-    request.onsuccess = () => resolve(request.result || []);
-    request.onerror = () => reject(request.error);
-  });
+    if (error) {
+      console.error("Supabase Fetch All Error:", error);
+      return [defaultPaper];
+    }
+
+    if (!data || data.length === 0) {
+      return [defaultPaper];
+    }
+
+    return data as Newspaper[];
+  } catch (err) {
+    console.error("Fetch All Exception:", err);
+    return [defaultPaper];
+  }
 };
 
-// Delete Paper By Date
+// Delete Newspaper from Supabase Cloud
 export const deletePaperFromDB = async (date: string): Promise<boolean> => {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(date);
+  const { error } = await supabase
+    .from('newspapers')
+    .delete()
+    .eq('date', date);
 
-    request.onsuccess = () => resolve(true);
-    request.onerror = () => reject(false);
-  });
+  if (error) {
+    console.error("Supabase Delete Error:", error);
+    return false;
+  }
+  return true;
 };
