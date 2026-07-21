@@ -16,7 +16,6 @@ export interface Newspaper {
   pages: NewspaperPage[];
 }
 
-// Default dummy newspaper if database is empty
 const defaultPaper: Newspaper = {
   date: '2026-07-21',
   pages: [
@@ -26,7 +25,7 @@ const defaultPaper: Newspaper = {
   ]
 };
 
-// Save or Update Paper in Supabase Cloud
+// Save to Supabase Cloud
 export const savePaperToDB = async (paperData: { date: string; pages: { pageNumber: number; imageUrl: string }[] }) => {
   const { data, error } = await supabase
     .from('newspapers')
@@ -39,7 +38,7 @@ export const savePaperToDB = async (paperData: { date: string; pages: { pageNumb
   return data;
 };
 
-// Fetch Newspaper by Date from Supabase Cloud
+// Get Paper from Supabase Cloud
 export const getPaperFromDB = async (date: string): Promise<Newspaper> => {
   try {
     const { data, error } = await supabase
@@ -48,23 +47,17 @@ export const getPaperFromDB = async (date: string): Promise<Newspaper> => {
       .eq('date', date)
       .maybeSingle();
 
-    if (error) {
-      console.error("Supabase Fetch Error:", error);
+    if (error || !data) {
       return { ...defaultPaper, date };
     }
 
-    if (data) {
-      return data as Newspaper;
-    }
-
-    return { ...defaultPaper, date };
+    return data as Newspaper;
   } catch (err) {
-    console.error("Fetch Exception:", err);
     return { ...defaultPaper, date };
   }
 };
 
-// Fetch All Papers List from Supabase Cloud
+// Get All Papers from Supabase Cloud
 export const getAllPapersFromDB = async (): Promise<Newspaper[]> => {
   try {
     const { data, error } = await supabase
@@ -72,23 +65,17 @@ export const getAllPapersFromDB = async (): Promise<Newspaper[]> => {
       .select('*')
       .order('date', { ascending: false });
 
-    if (error) {
-      console.error("Supabase Fetch All Error:", error);
-      return [defaultPaper];
-    }
-
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
       return [defaultPaper];
     }
 
     return data as Newspaper[];
   } catch (err) {
-    console.error("Fetch All Exception:", err);
     return [defaultPaper];
   }
 };
 
-// Delete Newspaper from Supabase Cloud
+// Delete Paper from Supabase Cloud
 export const deletePaperFromDB = async (date: string): Promise<boolean> => {
   const { error } = await supabase
     .from('newspapers')
@@ -96,7 +83,6 @@ export const deletePaperFromDB = async (date: string): Promise<boolean> => {
     .eq('date', date);
 
   if (error) {
-    console.error("Supabase Delete Error:", error);
     return false;
   }
   return true;
