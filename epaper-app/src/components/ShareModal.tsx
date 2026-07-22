@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Share2, Facebook, Twitter, Send } from 'lucide-react';
+import { X, Copy, Check, Share2, Send } from 'lucide-react';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -64,7 +64,10 @@ export default function ShareModal({ isOpen, onClose, selectedDate }: ShareModal
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-2xl border border-blue-200 transition active:scale-95"
           >
-            <Facebook size={22} className="mb-1" />
+            {/* Custom Facebook Icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
             <span className="text-xs font-bold">Facebook</span>
           </a>
 
@@ -74,7 +77,10 @@ export default function ShareModal({ isOpen, onClose, selectedDate }: ShareModal
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center p-3 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded-2xl border border-sky-200 transition active:scale-95"
           >
-            <Twitter size={22} className="mb-1" />
+            {/* Custom Twitter Icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
+              <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/>
+            </svg>
             <span className="text-xs font-bold">Twitter</span>
           </a>
         </div>
