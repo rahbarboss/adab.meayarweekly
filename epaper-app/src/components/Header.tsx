@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown } from 'lucide-react';
+import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { getAllPapersFromDB } from '@/lib/data';
 
@@ -210,10 +210,10 @@ export default function Header({
         </div>
       )}
 
-      {/* Header Banner Ad & Admin Icon */}
+      {/* Header Right Side (Logo + Visit Button + Admin Icon) */}
       <div className="flex items-center gap-3">
         
-        {/* 🟢 BADA AUR LAMBA LOGO 🟢 */}
+        {/* Logo */}
         <div className="hidden lg:flex items-center justify-center h-[56px] w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-2">
           <img 
             src="https://i.postimg.cc/SKwsxCsv/04.jpg" 
@@ -222,6 +222,22 @@ export default function Header({
           />
         </div>
 
+        {/* 🌟 NEW ANIMATED VISIT BUTTON 🌟 */}
+        <a 
+          href="https://www.dhpc.in" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group relative overflow-hidden flex items-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-5 py-2.5 rounded-xl font-black text-sm shadow-md hover:shadow-indigo-500/40 transition-all duration-300 hover:-translate-y-1 active:scale-95 border border-indigo-600"
+          title="Visit Official Website"
+        >
+          <span className="relative z-10 tracking-wide">VISIT</span>
+          <ExternalLink size={16} className="relative z-10 group-hover:rotate-12 transition-transform duration-300" />
+          
+          {/* Shine Animation Effect (Swipes across on hover) */}
+          <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:left-[100%] transition-all duration-700 ease-in-out z-0"></div>
+        </a>
+
+        {/* Admin Login Icon */}
         <Link 
           href="/admin" 
           title="Admin Login" 
