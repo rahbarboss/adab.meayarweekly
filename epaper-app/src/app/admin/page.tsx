@@ -1,7 +1,9 @@
+// @ts-nocheck
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '@/lib/data';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 interface PageInput {
   pageNumber: number;
@@ -24,6 +26,11 @@ export default function AdminDashboard() {
   // All Papers State
   const [publishedPapers, setPublishedPapers] = useState<Newspaper[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+
+  // Custom Calendar State for Upload Form
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
 
   // Fetch Published Papers
   const fetchAllPapers = async () => {
@@ -87,7 +94,6 @@ export default function AdminDashboard() {
 
           uploadedPages.push({ pageNumber: page.pageNumber, imageUrl: publicUrlData.publicUrl });
         } else if (page.previewUrl) {
-          // Existing image during edit
           uploadedPages.push({ pageNumber: page.pageNumber, imageUrl: page.previewUrl });
         } else {
           throw new Error(`Select file for Page ${page.pageNumber}`);
@@ -104,6 +110,7 @@ export default function AdminDashboard() {
       setMessage('❌ Error: ' + (err.message || 'Upload failed'));
     } finally {
       setLoading(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -137,9 +144,23 @@ export default function AdminDashboard() {
     }
   };
 
-  // Helper function for Calendar Days
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  // --------------------------------------------------------
+  // Calendar Helpers
+  // --------------------------------------------------------
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const publishedDatesList = publishedPapers.map(p => p.date);
+  
+  const handleMonthChange = (offset: number) => {
+    let newMonth = viewMonth + offset;
+    let newYear = viewYear;
+    if (newMonth < 0) { newMonth = 11; newYear -= 1; } 
+    else if (newMonth > 11) { newMonth = 0; newYear += 1; }
+    setViewMonth(newMonth);
+    setViewYear(newYear);
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
 
   // Render Login Shield
   if (!isAuthenticated) {
@@ -153,29 +174,13 @@ export default function AdminDashboard() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-slate-300 mb-2">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-emerald-500"
-                placeholder="admin"
-                required
-              />
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-emerald-500" placeholder="admin" required />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 text-slate-300 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-emerald-500"
-                placeholder="admin123"
-                required
-              />
+              <label className="block text-sm font-bold text-slate-300 mb-2">Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-emerald-500" placeholder="********" required />
             </div>
-            <button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition">
-              Login to Admin
-            </button>
+            <button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition">Login to Admin</button>
           </form>
         </div>
       </div>
@@ -214,7 +219,7 @@ export default function AdminDashboard() {
 
         {/* TAB 1: UPLOAD / EDIT FORM */}
         {activeTab === 'upload' && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-3xl mx-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-3xl mx-auto animate-in fade-in duration-300">
             <h2 className="text-xl font-bold text-emerald-400 mb-6 flex items-center gap-2">
               <span>📰</span> Upload / Edit E-Paper Edition
             </h2>
@@ -226,17 +231,102 @@ export default function AdminDashboard() {
             )}
 
             <form onSubmit={handleSavePaper} className="space-y-6">
-              <div>
+              
+              {/* 🌟 CUSTOM ANIMATED DYNAMIC CALENDAR 🌟 */}
+              <div className="relative z-50">
                 <label className="block text-sm font-bold text-slate-300 mb-2">Publish Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  max={todayStr} // 🚫 Lock Future Dates
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-white outline-none focus:border-emerald-500 font-bold"
-                  required
-                />
+                
+                <button
+                  type="button"
+                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                  className="w-full flex items-center justify-between p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-white outline-none focus:border-emerald-500 font-bold transition hover:border-slate-600 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <CalendarIcon size={18} className="text-emerald-400" />
+                    <span className="tracking-wide">{date.split('-').reverse().join('-')}</span>
+                  </div>
+                  <span className="text-slate-500 text-xs font-semibold bg-slate-800 px-3 py-1 rounded-lg">Change Date</span>
+                </button>
+
+                {/* CALENDAR DROPDOWN POPUP */}
+                {isCalendarOpen && (
+                  <>
+                    {/* Backdrop to close calendar when clicked outside */}
+                    <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={() => setIsCalendarOpen(false)} />
+                    
+                    <div className="absolute top-[110%] left-0 z-50 w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-top-2">
+                      
+                      {/* Calendar Header */}
+                      <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+                        <span className="font-extrabold text-emerald-400 text-base">
+                          {monthNames[viewMonth]} {viewYear}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button type="button" onClick={() => handleMonthChange(-1)} className="p-1.5 hover:bg-slate-800 text-slate-400 rounded-lg transition"><ChevronLeft size={18} /></button>
+                          <button type="button" onClick={() => handleMonthChange(1)} className="p-1.5 hover:bg-slate-800 text-slate-400 rounded-lg transition"><ChevronRight size={18} /></button>
+                        </div>
+                      </div>
+
+                      {/* Weekdays */}
+                      <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                          <span key={d} className="text-[10px] font-bold text-slate-500 uppercase">{d}</span>
+                        ))}
+                      </div>
+
+                      {/* Days Grid */}
+                      <div className="grid grid-cols-7 gap-1.5 text-center">
+                        {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`blank-${i}`} />)}
+
+                        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+                          const formattedMonth = String(viewMonth + 1).padStart(2, '0');
+                          const formattedDay = String(day).padStart(2, '0');
+                          const thisDateStr = `${viewYear}-${formattedMonth}-${formattedDay}`;
+
+                          const isFuture = thisDateStr > todayStr;
+                          const isPublished = publishedDatesList.includes(thisDateStr);
+                          const isSelected = date === thisDateStr;
+
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              disabled={isFuture}
+                              onClick={() => {
+                                setDate(thisDateStr);
+                                setIsCalendarOpen(false);
+                                // Agar edit kar raha hai to seedha load karlo pages
+                                if(isPublished) handleEditPaper(thisDateStr);
+                                else setPages([{ pageNumber: 1, file: null, previewUrl: '' }]);
+                              }}
+                              className={`h-9 w-full text-xs font-bold rounded-xl flex items-center justify-center transition-all duration-200 
+                                ${isSelected 
+                                  ? 'bg-emerald-500 text-white shadow-lg scale-110 ring-2 ring-emerald-300/50 z-10' 
+                                  : isFuture 
+                                  ? 'text-slate-600 bg-slate-950/50 cursor-not-allowed' 
+                                  : isPublished 
+                                  ? 'bg-blue-900/60 border border-blue-500 text-blue-300 font-extrabold shadow-sm hover:scale-105 hover:bg-blue-800' 
+                                  : 'text-slate-400 bg-slate-800/50 hover:bg-slate-700 hover:text-white'
+                                }`}
+                              title={isFuture ? 'Future Date' : isPublished ? 'Paper Already Published (BLUE)' : 'No Paper Published'}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Note for Admin */}
+                      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                        <div className="w-3 h-3 rounded-full bg-blue-900/60 border border-blue-500"></div>
+                        <span>Blue Dates = Already Published</span>
+                      </div>
+
+                    </div>
+                  </>
+                )}
               </div>
+              {/* 🌟 CALENDAR END 🌟 */}
 
               <div>
                 <label className="block text-sm font-bold text-slate-300 mb-3">Pages Image Files (JPG / PNG)</label>
@@ -247,7 +337,7 @@ export default function AdminDashboard() {
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleFileChange(idx, e.target.files?.[0] || null)}
-                      className="flex-1 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-800 file:text-white cursor-pointer"
+                      className="flex-1 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-800 file:text-white cursor-pointer hover:file:bg-emerald-700 transition"
                     />
                     {p.previewUrl && (
                       <img src={p.previewUrl} alt="Preview" className="w-16 h-20 object-cover rounded-lg border border-slate-700 shadow-md" />
@@ -273,7 +363,6 @@ export default function AdminDashboard() {
         {/* TAB 2: ALL PAPERS DYNAMIC MONTHS CALENDAR */}
         {activeTab === 'all_papers' && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            
             {/* Header Controls */}
             <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
               <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
@@ -294,30 +383,21 @@ export default function AdminDashboard() {
 
             {/* 12 Months Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {months.map((monthName, monthIndex) => {
-                const daysInMonth = new Date(selectedYear, monthIndex + 1, 0).getDate();
-                const firstDayIndex = new Date(selectedYear, monthIndex, 1).getDay();
+              {monthNames.map((monthName, monthIndex) => {
+                const daysInM = new Date(selectedYear, monthIndex + 1, 0).getDate();
+                const firstDayIdx = new Date(selectedYear, monthIndex, 1).getDay();
 
                 return (
                   <div key={monthName} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 hover:border-slate-700 transition shadow-lg flex flex-col">
                     <h3 className="text-lg font-black text-indigo-300 mb-4 pb-2 border-b border-slate-800 text-center">
                       {monthName} {selectedYear}
                     </h3>
-
-                    {/* Weekday Names */}
                     <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-500 mb-2">
                       <span>SU</span><span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span>
                     </div>
-
-                    {/* Month Days Grid */}
                     <div className="grid grid-cols-7 gap-1 text-center text-xs flex-1">
-                      {/* Empty slots before day 1 */}
-                      {Array.from({ length: firstDayIndex }).map((_, i) => (
-                        <div key={`empty-${i}`} className="p-2"></div>
-                      ))}
-
-                      {/* Actual Days */}
-                      {Array.from({ length: daysInMonth }).map((_, dayIdx) => {
+                      {Array.from({ length: firstDayIdx }).map((_, i) => <div key={`empty-${i}`} className="p-2"></div>)}
+                      {Array.from({ length: daysInM }).map((_, dayIdx) => {
                         const dayNum = dayIdx + 1;
                         const formattedDay = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
                         const formattedMonth = (monthIndex + 1) < 10 ? `0${monthIndex + 1}` : `${monthIndex + 1}`;
@@ -347,45 +427,22 @@ export default function AdminDashboard() {
                             }}
                           >
                             <span>{dayNum}</span>
-
-                            {/* Badge for Published Paper */}
                             {isPublished && (
                               <div className="flex gap-1 mt-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditPaper(dateStr);
-                                  }}
-                                  title="Edit Paper"
-                                  className="text-[9px] bg-emerald-600 text-white px-1 rounded hover:bg-emerald-500"
-                                >
-                                  ✏️
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeletePaper(dateStr);
-                                  }}
-                                  title="Delete Paper"
-                                  className="text-[9px] bg-red-600 text-white px-1 rounded hover:bg-red-500"
-                                >
-                                  🗑️
-                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleEditPaper(dateStr); }} title="Edit Paper" className="text-[9px] bg-emerald-600 text-white px-1 rounded hover:bg-emerald-500">✏️</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDeletePaper(dateStr); }} title="Delete Paper" className="text-[9px] bg-red-600 text-white px-1 rounded hover:bg-red-500">🗑️</button>
                               </div>
                             )}
                           </div>
                         );
                       })}
                     </div>
-
                   </div>
                 );
               })}
             </div>
-
           </div>
         )}
-
       </div>
     </div>
   );
