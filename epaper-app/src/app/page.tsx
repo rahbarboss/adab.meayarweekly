@@ -45,14 +45,15 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col font-sans select-none overflow-x-hidden">
+      
+      {/* 🟢 EXACT PROPS MATCHING YOUR HEADER COMPONENT */}
       <Header
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
-        publishedDates={publishedDates}
         totalPages={currentPaper?.pages?.length || 0}
-        currentPageIndex={currentPageIndex}
-        setCurrentPageIndex={setCurrentPageIndex}
-        onShareClick={() => setIsShareOpen(true)}
+        currentPage={currentPageIndex + 1}
+        setCurrentPage={(page) => setCurrentPageIndex(page - 1)}
+        onOpenShare={() => setIsShareOpen(true)}
       />
 
       <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden my-2 px-2 gap-2">
@@ -66,7 +67,7 @@ export default function Home() {
               <Thumbnails
                 pages={currentPaper.pages}
                 currentPage={currentPageIndex} 
-                onSelectPage={(index) => setCurrentPageIndex(index)}
+                onSelectPage={(index: number) => setCurrentPageIndex(index)}
               />
             </div>
 
@@ -74,7 +75,7 @@ export default function Home() {
               <Viewer
                 pages={currentPaper.pages}
                 currentPage={currentPageIndex} 
-                onPageChange={(index) => setCurrentPageIndex(index)}
+                onPageChange={(index: number) => setCurrentPageIndex(index)}
               />
             </div>
           </>
@@ -98,4 +99,4 @@ export default function Home() {
       />
     </main>
   );
-}
+}DD
