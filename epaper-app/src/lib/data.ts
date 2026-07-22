@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://ijypmnbsslabfnqltmbn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXBtbmJzc2xhYmZucWx0bWJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjY1NzEsImV4cCI6MjEwMDIwMjU3MX0.yHBTVP2A0BAYDSK81cYKqxM7d22Iw_8b714K8wZJv1Y';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ijypmnbsslabfnqltmbn.supabase.co';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXBtbmJzc2xhYmZucWx0bWJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjY1NzEsImV4cCI6MjEwMDIwMjU3MX0.yHBTVP2A0BAYDSK81cYKqxM7d22Iw_8b714K8wZJv1Y';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -16,16 +16,23 @@ export interface Newspaper {
   pages: NewspaperPage[];
 }
 
-const defaultPaper: Newspaper = {
-  date: '2026-07-21',
-  pages: [
-    { pageNumber: 1, imageUrl: 'https://placehold.co/800x1130/065f46/ffffff?text=Adab+e+Meayar+Page+1' },
-    { pageNumber: 2, imageUrl: 'https://placehold.co/800x1130/1e293b/ffffff?text=Adab+e+Meayar+Page+2' },
-    { pageNumber: 3, imageUrl: 'https://placehold.co/800x1130/0f172a/ffffff?text=Adab+e+Meayar+Page+3' }
-  ]
+// Get Paper by Date from Supabase
+export const getPaperFromDB = async (date: string): Promise<Newspaper | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('newspapers')
+      .select('*')
+      .eq('date', date)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as Newspaper;
+  } catch (err) {
+    return null;
+  }
 };
 
-// Save to Supabase Cloud
+// Save / Update Paper in Supabase
 export const savePaperToDB = async (paperData: { date: string; pages: { pageNumber: number; imageUrl: string }[] }) => {
   const { data, error } = await supabase
     .from('newspapers')
@@ -38,26 +45,7 @@ export const savePaperToDB = async (paperData: { date: string; pages: { pageNumb
   return data;
 };
 
-// Get Paper from Supabase Cloud
-export const getPaperFromDB = async (date: string): Promise<Newspaper> => {
-  try {
-    const { data, error } = await supabase
-      .from('newspapers')
-      .select('*')
-      .eq('date', date)
-      .maybeSingle();
-
-    if (error || !data) {
-      return { ...defaultPaper, date };
-    }
-
-    return data as Newspaper;
-  } catch (err) {
-    return { ...defaultPaper, date };
-  }
-};
-
-// Get All Papers from Supabase Cloud
+// Get All Published Dates
 export const getAllPapersFromDB = async (): Promise<Newspaper[]> => {
   try {
     const { data, error } = await supabase
@@ -65,17 +53,14 @@ export const getAllPapersFromDB = async (): Promise<Newspaper[]> => {
       .select('*')
       .order('date', { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return [defaultPaper];
-    }
-
+    if (error || !data) return [];
     return data as Newspaper[];
   } catch (err) {
-    return [defaultPaper];
+    return [];
   }
 };
 
-// Delete Paper from Supabase Cloud
+// Delete Paper from Supabase
 export const deletePaperFromDB = async (date: string): Promise<boolean> => {
   const { error } = await supabase
     .from('newspapers')
@@ -83,6 +68,7 @@ export const deletePaperFromDB = async (date: string): Promise<boolean> => {
     .eq('date', date);
 
   if (error) {
+    console.error("Delete Error:", error);
     return false;
   }
   return true;

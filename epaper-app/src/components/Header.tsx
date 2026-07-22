@@ -8,39 +8,39 @@ import { getAllPapersFromDB } from '@/lib/data';
 interface HeaderProps {
   selectedDate: string;
   setSelectedDate: (date: string) => void;
-  currentPage: number;
-  setCurrentPage: (page: number) => void;
+  publishedDates: string[];
   totalPages: number;
-  onOpenShare: () => void;
+  currentPageIndex: number;
+  setCurrentPageIndex: (index: number) => void;
+  onShareClick: () => void;
 }
 
 export default function Header({
   selectedDate,
   setSelectedDate,
-  currentPage,
-  setCurrentPage,
+  publishedDates,
   totalPages,
-  onOpenShare
+  currentPageIndex,
+  setCurrentPageIndex,
+  onShareClick
 }: HeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [uploadedDates, setUploadedDates] = useState<string[]>([]);
 
-  // Fixed Today Date: 2026-07-21
-  const todayStr = "2026-07-21";
-  const todayDateObj = new Date(todayStr);
+  // Dynamically get TODAY's date (e.g. 2026-07-22) so you don't have to change it daily
+  const todayObj = new Date();
+  const todayStr = todayObj.toISOString().split('T')[0]; 
 
   const currentDateObj = new Date(selectedDate);
-  const [viewYear, setViewYear] = useState(currentDateObj.getFullYear() || 2026);
-  const [viewMonth, setViewMonth] = useState(currentDateObj.getMonth() || 6);
+  const [viewYear, setViewYear] = useState(currentDateObj.getFullYear() || todayObj.getFullYear());
+  const [viewMonth, setViewMonth] = useState(currentDateObj.getMonth() || todayObj.getMonth());
 
-  // Fetch Published Papers Dates from Database
+  // Fetch Published Papers Dates from Database (ya props se lein)
   useEffect(() => {
     async function fetchDates() {
       try {
         const papers = await getAllPapersFromDB();
         const dates = papers.map((p) => p.date);
-        // Default initial date included
-        if (!dates.includes("2026-07-21")) dates.push("2026-07-21");
         setUploadedDates(dates);
       } catch (err) {
         console.error("Error fetching dates", err);
@@ -62,7 +62,7 @@ export default function Header({
     const formattedDay = String(day).padStart(2, '0');
     const newDateStr = `${viewYear}-${formattedMonth}-${formattedDay}`;
 
-    // Prevent selecting future dates or unuploaded dates
+    // Prevent selecting future dates
     if (newDateStr > todayStr) return;
 
     if (!uploadedDates.includes(newDateStr)) {
@@ -91,7 +91,7 @@ export default function Header({
   };
 
   return (
-    <header className="w-full max-w-6xl bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-3 mb-4 flex flex-wrap items-center justify-between gap-4 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans">
+    <header className="w-full max-w-6xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-3 mb-4 flex flex-wrap items-center justify-between gap-4 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans mt-2">
       
       {/* Date Picker & Share Button Group */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -193,12 +193,16 @@ export default function Header({
                 <div className="mt-4 pt-2 border-t flex items-center justify-between text-xs font-bold">
                   <button 
                     onClick={() => {
-                      setSelectedDate('2026-07-21');
-                      setIsCalendarOpen(false);
+                      if (uploadedDates.includes(todayStr)) {
+                        setSelectedDate(todayStr);
+                        setIsCalendarOpen(false);
+                      } else {
+                        alert("Aaj ka paper abhi upload nahi hua hai!");
+                      }
                     }} 
                     className="text-emerald-700 hover:underline"
                   >
-                    Today (21 July)
+                    Today
                   </button>
                   <button 
                     onClick={() => setIsCalendarOpen(false)} 
@@ -215,7 +219,7 @@ export default function Header({
 
         {/* Share Button */}
         <button 
-          onClick={onOpenShare}
+          onClick={onShareClick}
           className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 text-sm shadow-md border border-teal-600 transition"
         >
           <Share2 size={16} /> Share
@@ -223,40 +227,42 @@ export default function Header({
       </div>
 
       {/* Animated Page Numbers List (1, 2, 3...) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-2 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-inner">
-        <button 
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage(currentPage - 1)}
-          className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"
-        >
-          <ChevronLeft size={18} />
-        </button>
+      {totalPages > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-2 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-inner">
+          <button 
+            disabled={currentPageIndex === 0}
+            onClick={() => setCurrentPageIndex(currentPageIndex - 1)}
+            className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"
+          >
+            <ChevronLeft size={18} />
+          </button>
 
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => {
-          const isActive = currentPage === pg;
-          return (
-            <button
-              key={pg}
-              onClick={() => setCurrentPage(pg)}
-              className={`w-8 h-8 text-xs font-extrabold rounded-full transition-all duration-300 ${
-                isActive 
-                  ? 'bg-gradient-to-tr from-emerald-800 to-teal-700 text-white shadow-lg scale-110 ring-4 ring-emerald-300/50' 
-                  : 'bg-white hover:bg-emerald-100/70 text-slate-700 hover:scale-105 border border-slate-200'
-              }`}
-            >
-              {pg}
-            </button>
-          );
-        })}
+          {Array.from({ length: totalPages }, (_, i) => i).map((pgIndex) => {
+            const isActive = currentPageIndex === pgIndex;
+            return (
+              <button
+                key={pgIndex}
+                onClick={() => setCurrentPageIndex(pgIndex)}
+                className={`w-8 h-8 text-xs font-extrabold rounded-full transition-all duration-300 ${
+                  isActive 
+                    ? 'bg-gradient-to-tr from-emerald-800 to-teal-700 text-white shadow-lg scale-110 ring-4 ring-emerald-300/50' 
+                    : 'bg-white hover:bg-emerald-100/70 text-slate-700 hover:scale-105 border border-slate-200'
+                }`}
+              >
+                {pgIndex + 1}
+              </button>
+            );
+          })}
 
-        <button 
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(currentPage + 1)}
-          className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
+          <button 
+            disabled={currentPageIndex === totalPages - 1}
+            onClick={() => setCurrentPageIndex(currentPageIndex + 1)}
+            className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
 
       {/* Header Banner Ad & Admin Icon */}
       <div className="flex items-center gap-3">
