@@ -65,7 +65,7 @@ export default function Home() {
             <div className="hidden md:block w-64 lg:w-72 bg-slate-900/80 backdrop-blur rounded-2xl border border-slate-800 p-2 overflow-y-auto max-h-[calc(100vh-120px)]">
               <Thumbnails
                 pages={currentPaper.pages}
-                currentPageIndex={currentPageIndex}
+                currentPage={currentPageIndex} 
                 onSelectPage={(index) => setCurrentPageIndex(index)}
               />
             </div>
@@ -73,7 +73,7 @@ export default function Home() {
             <div className="flex-1 bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800 p-2 flex items-center justify-center relative min-h-[75vh]">
               <Viewer
                 pages={currentPaper.pages}
-                currentPageIndex={currentPageIndex}
+                currentPage={currentPageIndex} 
                 onPageChange={(index) => setCurrentPageIndex(index)}
               />
             </div>
