@@ -1,49 +1,38 @@
 'use client';
-
 import React from 'react';
 
-interface ThumbnailsProps {
-  pages: { pageNumber: number; imageUrl: string }[];
-  currentPage: number;
-  setCurrentPage: (pg: number) => void;
-}
+export default function Thumbnails({ pages, currentPage, currentPageIndex, onSelectPage }: any) {
+  if (!pages || pages.length === 0) return null;
+  
+  // 100% working logic for active page
+  const activeIdx = currentPage !== undefined ? currentPage : (currentPageIndex !== undefined ? currentPageIndex : 0);
 
-export default function Thumbnails({ pages, currentPage, setCurrentPage }: ThumbnailsProps) {
   return (
-    <div className="md:col-span-3 flex flex-col gap-3 max-h-[82vh] overflow-y-auto pr-1">
-      {pages.map((pg) => (
-        <div 
-          key={pg.pageNumber} 
-          onClick={() => setCurrentPage(pg.pageNumber)}
-          className={`cursor-pointer border-2 rounded-lg p-1.5 transition bg-white text-center shadow-sm ${
-            currentPage === pg.pageNumber 
-              ? 'border-emerald-800 ring-2 ring-emerald-600 shadow' 
-              : 'border-slate-200 hover:border-slate-400'
-          }`}
-        >
-          {/* A4 Format Thumbnail Aspect Ratio */}
-          <div className="w-full aspect-[1/1.414] bg-slate-100 rounded overflow-hidden flex items-center justify-center">
-            {pg.imageUrl ? (
-              <img 
-                src={pg.imageUrl} 
-                alt={`Page No ${pg.pageNumber}`} 
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-xs text-slate-400">No Image</span>
-            )}
+    <div className="flex flex-col gap-5 p-3 pb-10">
+      {pages.map((page: any, index: number) => {
+        const isActive = activeIdx === index;
+        return (
+          <div
+            key={index}
+            onClick={() => onSelectPage(index)}
+            className={`relative w-full cursor-pointer overflow-hidden rounded-xl border-4 transition-all duration-300 ${
+              isActive
+                ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105 z-10'
+                : 'border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-600 hover:scale-100'
+            }`}
+          >
+            {/* pointer-events-none ensures image doesn't block the click */}
+            <img
+              src={page.imageUrl}
+              alt={`Page ${page.pageNumber}`}
+              className="w-full h-auto object-cover pointer-events-none"
+            />
+            <div className="bg-slate-900 text-white text-xs font-bold py-2 text-center border-t border-slate-800">
+              Page No {page.pageNumber}
+            </div>
           </div>
-          <span className="text-xs font-semibold mt-1 inline-block text-slate-600">
-            Page No {pg.pageNumber}
-          </span>
-        </div>
-      ))}
-
-      {/* Left Vertical Ad */}
-      <div className="border-2 border-emerald-900 bg-emerald-900 text-white p-4 rounded-lg text-center text-xs font-semibold mt-2 shadow">
-        To Place Your Advertisement of 300 × 600 px<br/><br/>
-        <span className="text-sm font-extrabold text-amber-300">Contact: +91 8002397082</span>
-      </div>
+        );
+      })}
     </div>
   );
 }
