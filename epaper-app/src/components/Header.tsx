@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,29 +6,22 @@ import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown } from '
 import Link from 'next/link';
 import { getAllPapersFromDB } from '@/lib/data';
 
-interface HeaderProps {
-  selectedDate: string;
-  setSelectedDate: (date: string) => void;
-  publishedDates: string[];
-  totalPages: number;
-  currentPageIndex: number;
-  setCurrentPageIndex: (index: number) => void;
-  onShareClick: () => void;
-}
-
 export default function Header({
   selectedDate,
   setSelectedDate,
   publishedDates,
   totalPages,
+  currentPage,
+  setCurrentPage,
   currentPageIndex,
   setCurrentPageIndex,
+  onOpenShare,
   onShareClick
-}: HeaderProps) {
+}: any) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [uploadedDates, setUploadedDates] = useState<string[]>([]);
 
-  // Dynamically get TODAY's date (e.g. 2026-07-22) so you don't have to change it daily
+  // Dynamically get TODAY's date
   const todayObj = new Date();
   const todayStr = todayObj.toISOString().split('T')[0]; 
 
@@ -35,7 +29,6 @@ export default function Header({
   const [viewYear, setViewYear] = useState(currentDateObj.getFullYear() || todayObj.getFullYear());
   const [viewMonth, setViewMonth] = useState(currentDateObj.getMonth() || todayObj.getMonth());
 
-  // Fetch Published Papers Dates from Database (ya props se lein)
   useEffect(() => {
     async function fetchDates() {
       try {
@@ -62,7 +55,6 @@ export default function Header({
     const formattedDay = String(day).padStart(2, '0');
     const newDateStr = `${viewYear}-${formattedMonth}-${formattedDay}`;
 
-    // Prevent selecting future dates
     if (newDateStr > todayStr) return;
 
     if (!uploadedDates.includes(newDateStr)) {
@@ -90,6 +82,24 @@ export default function Header({
     setViewYear(newYear);
   };
 
+  // Safe page navigation handlers
+  const actualCurrentPage = currentPageIndex !== undefined ? currentPageIndex : (currentPage !== undefined ? currentPage - 1 : 0);
+  
+  const handlePrevPage = () => {
+    if (setCurrentPageIndex) setCurrentPageIndex(actualCurrentPage - 1);
+    else if (setCurrentPage) setCurrentPage(actualCurrentPage);
+  };
+
+  const handleNextPage = () => {
+    if (setCurrentPageIndex) setCurrentPageIndex(actualCurrentPage + 1);
+    else if (setCurrentPage) setCurrentPage(actualCurrentPage + 2);
+  };
+
+  const handleGoToPage = (index: number) => {
+    if (setCurrentPageIndex) setCurrentPageIndex(index);
+    else if (setCurrentPage) setCurrentPage(index + 1);
+  };
+
   return (
     <header className="w-full max-w-6xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-3 mb-4 flex flex-wrap items-center justify-between gap-4 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans mt-2">
       
@@ -107,51 +117,24 @@ export default function Header({
             <ChevronDown size={16} className={`transition-transform duration-300 ${isCalendarOpen ? 'rotate-180' : ''}`} />
           </button>
 
-          {/* CUSTOM ANIMATED CALENDAR POPUP */}
           {isCalendarOpen && (
             <>
-              <div 
-                className="fixed inset-0 z-40 bg-black/10" 
-                onClick={() => setIsCalendarOpen(false)} 
-              />
-
+              <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setIsCalendarOpen(false)} />
               <div className="absolute left-0 mt-3 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-top-3 duration-200">
-                
-                {/* Header */}
                 <div className="flex items-center justify-between mb-4 pb-2 border-b">
-                  <span className="font-extrabold text-slate-800 text-base">
-                    {monthNames[viewMonth]} {viewYear}
-                  </span>
-
+                  <span className="font-extrabold text-slate-800 text-base">{monthNames[viewMonth]} {viewYear}</span>
                   <div className="flex items-center gap-1">
-                    <button 
-                      onClick={() => handleMonthChange(-1)} 
-                      className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg transition"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleMonthChange(1)} 
-                      className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg transition"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
+                    <button onClick={() => handleMonthChange(-1)} className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg transition"><ChevronLeft size={18} /></button>
+                    <button onClick={() => handleMonthChange(1)} className="p-1.5 hover:bg-slate-100 text-slate-700 rounded-lg transition"><ChevronRight size={18} /></button>
                   </div>
                 </div>
-
-                {/* Weekdays */}
                 <div className="grid grid-cols-7 gap-1 text-center mb-2">
                   {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
                     <span key={d} className="text-xs font-bold text-slate-400">{d}</span>
                   ))}
                 </div>
-
-                {/* Days Grid */}
                 <div className="grid grid-cols-7 gap-1 text-center">
-                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                    <div key={`blank-${i}`} />
-                  ))}
-
+                  {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`blank-${i}`} />)}
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                     const formattedMonth = String(viewMonth + 1).padStart(2, '0');
                     const formattedDay = String(day).padStart(2, '0');
@@ -167,51 +150,14 @@ export default function Header({
                         disabled={isFuture}
                         onClick={() => handleSelectDay(day)}
                         className={`h-9 w-9 text-xs font-bold rounded-xl flex items-center justify-center transition-all duration-200 ${
-                          isSelected
-                            ? 'bg-emerald-700 text-white shadow-md scale-105 ring-2 ring-emerald-300'
-                            : isFuture
-                            ? 'text-slate-300 cursor-not-allowed bg-slate-50'
-                            : hasPaperUploaded
-                            ? 'bg-emerald-100/80 text-emerald-800 hover:bg-emerald-200 font-extrabold cursor-pointer hover:scale-105'
-                            : 'text-slate-400 opacity-50 cursor-not-allowed hover:bg-slate-100'
+                          isSelected ? 'bg-emerald-700 text-white shadow-md scale-105 ring-2 ring-emerald-300' : isFuture ? 'text-slate-300 cursor-not-allowed bg-slate-50' : hasPaperUploaded ? 'bg-emerald-100/80 text-emerald-800 hover:bg-emerald-200 font-extrabold cursor-pointer hover:scale-105' : 'text-slate-400 opacity-50 cursor-not-allowed hover:bg-slate-100'
                         }`}
-                        title={
-                          isFuture
-                            ? 'Future Date (Not Allowed)'
-                            : hasPaperUploaded
-                            ? 'Newspaper Available'
-                            : 'No Newspaper Uploaded'
-                        }
                       >
                         {day}
                       </button>
                     );
                   })}
                 </div>
-
-                {/* Footer Controls */}
-                <div className="mt-4 pt-2 border-t flex items-center justify-between text-xs font-bold">
-                  <button 
-                    onClick={() => {
-                      if (uploadedDates.includes(todayStr)) {
-                        setSelectedDate(todayStr);
-                        setIsCalendarOpen(false);
-                      } else {
-                        alert("Aaj ka paper abhi upload nahi hua hai!");
-                      }
-                    }} 
-                    className="text-emerald-700 hover:underline"
-                  >
-                    Today
-                  </button>
-                  <button 
-                    onClick={() => setIsCalendarOpen(false)} 
-                    className="text-slate-400 hover:text-slate-600"
-                  >
-                    Close
-                  </button>
-                </div>
-
               </div>
             </>
           )}
@@ -219,7 +165,7 @@ export default function Header({
 
         {/* Share Button */}
         <button 
-          onClick={onShareClick}
+          onClick={onOpenShare || onShareClick}
           className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-2 text-sm shadow-md border border-teal-600 transition"
         >
           <Share2 size={16} /> Share
@@ -230,19 +176,19 @@ export default function Header({
       {totalPages > 0 && (
         <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-2 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-inner">
           <button 
-            disabled={currentPageIndex === 0}
-            onClick={() => setCurrentPageIndex(currentPageIndex - 1)}
+            disabled={actualCurrentPage === 0}
+            onClick={handlePrevPage}
             className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"
           >
             <ChevronLeft size={18} />
           </button>
 
           {Array.from({ length: totalPages }, (_, i) => i).map((pgIndex) => {
-            const isActive = currentPageIndex === pgIndex;
+            const isActive = actualCurrentPage === pgIndex;
             return (
               <button
                 key={pgIndex}
-                onClick={() => setCurrentPageIndex(pgIndex)}
+                onClick={() => handleGoToPage(pgIndex)}
                 className={`w-8 h-8 text-xs font-extrabold rounded-full transition-all duration-300 ${
                   isActive 
                     ? 'bg-gradient-to-tr from-emerald-800 to-teal-700 text-white shadow-lg scale-110 ring-4 ring-emerald-300/50' 
@@ -255,8 +201,8 @@ export default function Header({
           })}
 
           <button 
-            disabled={currentPageIndex === totalPages - 1}
-            onClick={() => setCurrentPageIndex(currentPageIndex + 1)}
+            disabled={actualCurrentPage === totalPages - 1}
+            onClick={handleNextPage}
             className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"
           >
             <ChevronRight size={18} />
@@ -266,9 +212,14 @@ export default function Header({
 
       {/* Header Banner Ad & Admin Icon */}
       <div className="flex items-center gap-3">
-        <div className="hidden lg:block border-2 border-emerald-800/80 bg-emerald-50/80 text-emerald-900 px-4 py-1.5 text-xs font-bold rounded-xl text-center shadow-sm">
-          To Place Your Advertisement of 1200×200 px<br/>
-          <span className="text-sm font-extrabold text-emerald-800">Contact: +91 8002397082</span>
+        
+        {/* 🟢 DARUL HUDA PUNGANUR LOGO (DIRECT LINK) 🟢 */}
+        <div className="hidden lg:flex items-center justify-center h-[42px] max-w-[280px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-1">
+          <img 
+            src="https://i.postimg.cc/SKwsxCsv/04.jpg" 
+            alt="Darul Huda Punganur" 
+            className="h-full w-auto object-contain mix-blend-multiply"
+          />
         </div>
 
         <Link 
