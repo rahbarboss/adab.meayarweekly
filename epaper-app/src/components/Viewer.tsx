@@ -1,92 +1,62 @@
 'use client';
 
-import React from 'react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 
-interface ViewerProps {
-  imageUrl: string;
-  currentPage: number;
-  totalPages: number;
-}
+export default function Viewer({ pages, currentPage, currentPageIndex }: any) {
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
-export default function Viewer({ imageUrl, currentPage, totalPages }: ViewerProps) {
-  return (
-    <div className="md:col-span-9 flex flex-col items-center justify-center">
-      
-      {/* Red Marked Main Container Fixed in Exact A4 Proportions */}
-      <div className="w-full max-w-[680px] aspect-[1/1.414] bg-white border-2 border-slate-300 rounded-xl p-2 shadow-2xl relative flex flex-col items-center justify-between overflow-hidden">
-        
-        <TransformWrapper 
-          initialScale={1} 
-          minScale={1} 
-          maxScale={4}
-          centerOnInit={true}
-          disabled={false}
-          panning={{ disabled: false }} // Zoom hone par pan hoga, normal me fixed rahega
-        >
-          {({ zoomIn, zoomOut, resetTransform, state }) => (
-            <>
-              {/* Floating Zoom Controls Bar */}
-              <div className="absolute top-3 right-3 z-30 bg-slate-900/85 text-white p-1.5 rounded-lg flex items-center gap-1.5 backdrop-blur-md shadow-lg border border-slate-700">
-                <button 
-                  onClick={() => zoomIn()} 
-                  className="p-1.5 hover:bg-slate-700 rounded transition" 
-                  title="Zoom In"
-                >
-                  <ZoomIn size={18} />
-                </button>
-                <button 
-                  onClick={() => zoomOut()} 
-                  className="p-1.5 hover:bg-slate-700 rounded transition" 
-                  title="Zoom Out"
-                >
-                  <ZoomOut size={18} />
-                </button>
-                <button 
-                  onClick={() => resetTransform()} 
-                  className="p-1.5 hover:bg-slate-700 rounded transition" 
-                  title="Reset Zoom"
-                >
-                  <RotateCcw size={18} />
-                </button>
-              </div>
+  // 100% Fail-Proof Logic: Ye currentPage aur currentPageIndex dono ko support karega
+  const activeIndex = currentPage !== undefined ? currentPage : (currentPageIndex !== undefined ? currentPageIndex : 0);
+  const page = pages?.[activeIndex];
 
-              {/* Exact A4 Canvas Image View */}
-              <div className="w-full h-full flex items-center justify-center overflow-hidden bg-slate-50 rounded-lg">
-                <TransformComponent 
-                  wrapperStyle={{ width: "100%", height: "100%" }} 
-                  contentStyle={{ 
-                    width: "100%", 
-                    height: "100%", 
-                    display: "flex", 
-                    justifyContent: "center", 
-                    alignItems: "center" 
-                  }}
-                >
-                  {imageUrl ? (
-                    <img 
-                      src={imageUrl} 
-                      alt={`Newspaper Page ${currentPage}`} 
-                      className="w-full h-full object-fill bg-white shadow-md rounded"
-                    />
-                  ) : (
-                    <div className="text-slate-400 font-semibold text-sm">
-                      Paper Page Image Missing
-                    </div>
-                  )}
-                </TransformComponent>
-              </div>
-            </>
-          )}
-        </TransformWrapper>
+  // Jab page change ho, toh Zoom aur Rotation reset ho jaye
+  useEffect(() => {
+    setScale(1);
+    setRotation(0);
+  }, [activeIndex]);
 
-        {/* Page Counter Indicator Inside Frame */}
-        <div className="absolute bottom-2 z-20 text-[11px] font-bold text-slate-700 bg-white/90 backdrop-blur-sm px-3 py-0.5 rounded-full border border-slate-300 shadow-sm">
-          Page {currentPage} of {totalPages}
-        </div>
-
+  // Agar galti se image missing ho
+  if (!page || !page.imageUrl) {
+    return (
+      <div className="w-full h-full min-h-[75vh] flex flex-col items-center justify-center bg-white rounded-2xl shadow-2xl">
+        <span className="text-slate-400 font-bold text-xl mb-2">Paper Page Image Missing</span>
+        <span className="text-slate-300 text-sm">Please re-upload this page from Admin panel</span>
       </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full min-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl">
+      
+      {/* 🔍 Top Right Floating Zoom & Rotate Controls */}
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700 shadow-2xl">
+        <button onClick={() => setScale(s => Math.min(s + 0.25, 3))} className="p-2 text-slate-300 hover:text-white hover:bg-emerald-600 rounded-lg transition-all active:scale-95" title="Zoom In">
+          <ZoomIn size={20} />
+        </button>
+        <button onClick={() => setScale(s => Math.max(s - 0.25, 0.5))} className="p-2 text-slate-300 hover:text-white hover:bg-emerald-600 rounded-lg transition-all active:scale-95" title="Zoom Out">
+          <ZoomOut size={20} />
+        </button>
+        <button onClick={() => setRotation(r => r + 90)} className="p-2 text-slate-300 hover:text-white hover:bg-emerald-600 rounded-lg transition-all active:scale-95" title="Rotate">
+          <RotateCw size={20} />
+        </button>
+      </div>
+
+      {/* 📰 MASSIVE A4 E-PAPER IMAGE CONTAINER */}
+      <div className="w-full h-full overflow-auto flex items-center justify-center p-2">
+        <img
+          src={page.imageUrl}
+          alt={`E-Paper Page ${page.pageNumber}`}
+          style={{
+            transform: `scale(${scale}) rotate(${rotation}deg)`,
+            transformOrigin: 'center center',
+            transition: scale === 1 && rotation === 0 ? 'transform 0.3s ease-out' : 'none'
+          }}
+          className="max-w-full max-h-[85vh] w-auto h-auto object-contain bg-white shadow-2xl"
+        />
+      </div>
+      
     </div>
   );
 }
