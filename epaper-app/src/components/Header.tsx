@@ -213,21 +213,21 @@ export default function Header({
       {/* Header Banner Ad & Admin Icon */}
       <div className="flex items-center gap-3">
         
-        {/* 🟢 DARUL HUDA PUNGANUR LOGO (DIRECT LINK) 🟢 */}
-        <div className="hidden lg:flex items-center justify-center h-[42px] max-w-[280px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-1">
+        {/* 🟢 BADA AUR LAMBA LOGO 🟢 */}
+        <div className="hidden lg:flex items-center justify-center h-[56px] w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-2">
           <img 
             src="https://i.postimg.cc/SKwsxCsv/04.jpg" 
             alt="Darul Huda Punganur" 
-            className="h-full w-auto object-contain mix-blend-multiply"
+            className="w-full h-full object-contain mix-blend-multiply scale-125"
           />
         </div>
 
         <Link 
           href="/admin" 
           title="Admin Login" 
-          className="p-2.5 bg-slate-900 text-white rounded-2xl hover:bg-emerald-800 shadow-md transition-all active:scale-90 border border-slate-700"
+          className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-emerald-800 shadow-md transition-all active:scale-90 border border-slate-700"
         >
-          <User size={18} />
+          <User size={20} />
         </Link>
       </div>
 
