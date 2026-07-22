@@ -64,18 +64,18 @@ export default function Home() {
         ) : currentPaper && currentPaper.pages && currentPaper.pages.length > 0 ? (
           <>
             <div className="hidden md:block w-64 lg:w-72 bg-slate-900/80 backdrop-blur rounded-2xl border border-slate-800 p-2 overflow-y-auto max-h-[calc(100vh-120px)]">
+              {/* Thumbnails ko ab exactly wahi prop milega jo use chahiye */}
               <Thumbnails
                 pages={currentPaper.pages}
                 currentPage={currentPageIndex} 
-                currentPageIndex={currentPageIndex} 
                 onSelectPage={(index) => setCurrentPageIndex(index)}
               />
             </div>
 
             <div className="flex-1 bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800 p-2 flex items-center justify-center relative min-h-[75vh]">
+              {/* Viewer ko wapas uske original prop par set kar diya hai taaki A4 size wapas aa jaye */}
               <Viewer
                 pages={currentPaper.pages}
-                currentPage={currentPageIndex} 
                 currentPageIndex={currentPageIndex} 
                 onPageChange={(index) => setCurrentPageIndex(index)}
               />
