@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { X, Copy, Check, Share2, Send } from 'lucide-react';
-
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
