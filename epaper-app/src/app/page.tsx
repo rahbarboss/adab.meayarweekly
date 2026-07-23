@@ -74,7 +74,7 @@ export default function Home() {
         />
       </div>
 
-      <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden my-1 md:my-2 px-1 md:px-2 gap-2 z-10 pb-20 md:pb-2">
+      <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden my-1 md:my-2 px-1 md:px-2 gap-2 z-10 pb-2">
         {loading ? (
           <>
             <div className="hidden md:flex flex-col gap-5 w-64 lg:w-72 rounded-2xl border p-3 overflow-hidden bg-slate-900/60 border-slate-800">
@@ -100,25 +100,9 @@ export default function Home() {
               <Thumbnails pages={currentPaper.pages} currentPageIndex={currentPageIndex} onSelectPage={(index: number) => setCurrentPageIndex(index)} />
             </div>
 
-            {/* VIEWER AREA */}
+            {/* VIEWER AREA (Mobile bottom thumbnails removed for clean view) */}
             <div className="flex-1 backdrop-blur rounded-2xl border p-1 md:p-2 flex items-center justify-center relative min-h-[75vh] bg-slate-900/50 border-slate-800 overflow-hidden">
               <Viewer pages={currentPaper.pages} currentPageIndex={currentPageIndex} onPageChange={(index: number) => setCurrentPageIndex(index)} />
-              
-              {/* 📱 MOBILE THUMBNAILS (Hidden on Desktop) - Anchored to bottom of Viewer */}
-              <div className="md:hidden absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-xl border border-slate-700 rounded-2xl p-2.5 flex overflow-x-auto gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40 custom-scrollbar">
-                {currentPaper.pages.map((p, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentPageIndex(idx)}
-                    className={`relative flex-shrink-0 w-[4.5rem] h-[6.5rem] rounded-xl overflow-hidden border-[3px] transition-all duration-300 ${currentPageIndex === idx ? 'border-emerald-500 scale-105 shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10' : 'border-slate-700 opacity-60 hover:opacity-100'}`}
-                  >
-                    <img src={p.imageUrl} alt={`Page ${p.pageNumber}`} className="w-full h-full object-cover bg-white" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-black/0 pt-4 pb-1 text-white text-[10px] font-black text-center">
-                      Page {p.pageNumber}
-                    </div>
-                  </button>
-                ))}
-              </div>
             </div>
           </>
 
