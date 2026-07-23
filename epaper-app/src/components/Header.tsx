@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown, ExternalLink, Sun, Moon } from 'lucide-react';
+import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { getAllPapersFromDB } from '@/lib/data';
 
@@ -16,9 +16,7 @@ export default function Header({
   currentPageIndex,
   setCurrentPageIndex,
   onOpenShare,
-  onShareClick,
-  isDarkMode,     // 🌟 NEW: Dark Mode State
-  toggleTheme     // 🌟 NEW: Theme Toggle Function
+  onShareClick
 }: any) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [uploadedDates, setUploadedDates] = useState<string[]>([]);
@@ -92,7 +90,7 @@ export default function Header({
   };
 
   return (
-    <header className={`w-full max-w-6xl mx-auto backdrop-blur-md rounded-2xl shadow-lg p-3 mb-4 flex flex-wrap items-center justify-between gap-4 border transition-all duration-500 relative z-30 font-sans mt-2 ${isDarkMode ? 'bg-white/90 border-slate-200/80' : 'bg-white/95 border-slate-300 shadow-xl'}`}>
+    <header className="w-full max-w-6xl mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-3 mb-4 flex flex-wrap items-center justify-between gap-4 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans mt-2">
       
       {/* Left side: Date & Share */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -160,7 +158,7 @@ export default function Header({
         </div>
       )}
 
-      {/* Right Side: Logo + Visit + Theme Toggle + Admin */}
+      {/* Right Side: Logo + Visit + Admin */}
       <div className="flex items-center gap-3">
         
         <div className="hidden lg:flex items-center justify-center h-[56px] w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-2">
@@ -173,19 +171,7 @@ export default function Header({
           <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:left-[100%] transition-all duration-700 ease-in-out z-0"></div>
         </a>
 
-        {/* 🌟 NEW ANIMATED THEME TOGGLE BUTTON 🌟 */}
-        <button 
-          onClick={toggleTheme} 
-          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className={`p-3 rounded-2xl shadow-md transition-all duration-300 active:scale-90 border flex items-center justify-center overflow-hidden relative group ${isDarkMode ? 'bg-slate-900 border-slate-700 hover:bg-slate-800' : 'bg-amber-100 border-amber-300 hover:bg-amber-200'}`}
-        >
-          {isDarkMode ? (
-            <Moon size={20} className="text-blue-400 group-hover:-rotate-12 transition-transform" />
-          ) : (
-            <Sun size={20} className="text-amber-600 group-hover:rotate-45 transition-transform" />
-          )}
-        </button>
-
+        {/* ADMIN BUTTON (Moon button has been removed from here) */}
         <Link href="/admin" title="Admin Login" className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-emerald-800 shadow-md transition-all active:scale-90 border border-slate-700">
           <User size={20} />
         </Link>
