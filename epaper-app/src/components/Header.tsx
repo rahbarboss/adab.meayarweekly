@@ -154,10 +154,14 @@ export default function Header({
         </div>
       )}
 
-      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): Logo */}
+      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 NEW LOGO HERE 🌟 */}
       <div className="flex w-full md:w-auto items-center justify-center order-2 md:order-3">
         <div className="h-[60px] w-full max-w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-2 flex items-center justify-center">
-          <img src="https://i.postimg.cc/SKwsxCsv/04.jpg" alt="Darul Huda Punganur" className="w-full h-full object-contain mix-blend-multiply scale-125" />
+          <img 
+            src="https://i.postimg.cc/cJXVysZD/Initial-letter-wg-logo-or-gw-logo-design-template.png" 
+            alt="Rahbar's Publications Logo" 
+            className="w-full h-full object-contain mix-blend-multiply scale-110" 
+          />
         </div>
       </div>
 
