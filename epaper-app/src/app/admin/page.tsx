@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '@/lib/data';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+// 🌟 TRASH ICON ADD KIYA GAYA HAI 🌟
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 
 interface PageInput {
   pageNumber: number;
@@ -66,6 +67,22 @@ export default function AdminDashboard() {
     setPages([...pages, { pageNumber: pages.length + 1, file: null, previewUrl: '' }]);
   };
 
+  // 🌟 NEW FUNCTION: DELETE PAGE & AUTO-RENUMBERING 🌟
+  const removePageField = (indexToRemove: number) => {
+    if (pages.length === 1) {
+      alert('Kam se kam ek page hona zaroori hai!');
+      return;
+    }
+    // Delete chosen page
+    const updated = pages.filter((_, idx) => idx !== indexToRemove);
+    // Re-number remaining pages properly
+    const renumbered = updated.map((page, idx) => ({
+      ...page,
+      pageNumber: idx + 1
+    }));
+    setPages(renumbered);
+  };
+
   const handleSavePaper = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!date) return alert('Select Date');
@@ -114,7 +131,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Edit Existing Paper
   const handleEditPaper = async (paperDate: string) => {
     const paper = await getPaperFromDB(paperDate);
     if (paper) {
@@ -129,7 +145,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Delete Paper
   const handleDeletePaper = async (paperDate: string) => {
     if (confirm(`Are you sure you want to delete newspaper for ${paperDate}?`)) {
       setLoading(true);
@@ -144,9 +159,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // --------------------------------------------------------
-  // Calendar Helpers
-  // --------------------------------------------------------
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const publishedDatesList = publishedPapers.map(p => p.date);
   
@@ -162,7 +174,6 @@ export default function AdminDashboard() {
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
 
-  // Render Login Shield
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4 font-sans">
@@ -191,7 +202,6 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 font-sans">
       <div className="max-w-6xl mx-auto">
         
-        {/* Top Navbar */}
         <div className="flex flex-wrap justify-between items-center mb-8 pb-4 border-b border-slate-800 gap-4">
           <div>
             <h1 className="text-3xl font-black text-emerald-400">E-Paper Admin Panel</h1>
@@ -199,25 +209,12 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition ${activeTab === 'upload' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
-            >
-              + Upload Paper
-            </button>
-            <button
-              onClick={() => setActiveTab('all_papers')}
-              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition ${activeTab === 'all_papers' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}
-            >
-              📅 ALL PAPERS
-            </button>
-            <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-400 bg-red-950/40 hover:bg-red-900/60 px-4 py-2.5 rounded-xl border border-red-800/40 transition">
-              Logout
-            </button>
+            <button onClick={() => setActiveTab('upload')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition ${activeTab === 'upload' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}>+ Upload Paper</button>
+            <button onClick={() => setActiveTab('all_papers')} className={`px-5 py-2.5 rounded-xl font-bold text-sm transition ${activeTab === 'all_papers' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-900 hover:bg-slate-800 text-slate-400'}`}>📅 ALL PAPERS</button>
+            <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-400 bg-red-950/40 hover:bg-red-900/60 px-4 py-2.5 rounded-xl border border-red-800/40 transition">Logout</button>
           </div>
         </div>
 
-        {/* TAB 1: UPLOAD / EDIT FORM */}
         {activeTab === 'upload' && (
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-3xl mx-auto animate-in fade-in duration-300">
             <h2 className="text-xl font-bold text-emerald-400 mb-6 flex items-center gap-2">
@@ -232,15 +229,9 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSavePaper} className="space-y-6">
               
-              {/* 🌟 CUSTOM ANIMATED DYNAMIC CALENDAR 🌟 */}
               <div className="relative z-50">
                 <label className="block text-sm font-bold text-slate-300 mb-2">Publish Date</label>
-                
-                <button
-                  type="button"
-                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                  className="w-full flex items-center justify-between p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-white outline-none focus:border-emerald-500 font-bold transition hover:border-slate-600 cursor-pointer"
-                >
+                <button type="button" onClick={() => setIsCalendarOpen(!isCalendarOpen)} className="w-full flex items-center justify-between p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-white outline-none focus:border-emerald-500 font-bold transition hover:border-slate-600 cursor-pointer">
                   <div className="flex items-center gap-3">
                     <CalendarIcon size={18} className="text-emerald-400" />
                     <span className="tracking-wide">{date.split('-').reverse().join('-')}</span>
@@ -248,36 +239,22 @@ export default function AdminDashboard() {
                   <span className="text-slate-500 text-xs font-semibold bg-slate-800 px-3 py-1 rounded-lg">Change Date</span>
                 </button>
 
-                {/* CALENDAR DROPDOWN POPUP */}
                 {isCalendarOpen && (
                   <>
-                    {/* Backdrop to close calendar when clicked outside */}
                     <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={() => setIsCalendarOpen(false)} />
-                    
                     <div className="absolute top-[110%] left-0 z-50 w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-top-2">
-                      
-                      {/* Calendar Header */}
                       <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
-                        <span className="font-extrabold text-emerald-400 text-base">
-                          {monthNames[viewMonth]} {viewYear}
-                        </span>
+                        <span className="font-extrabold text-emerald-400 text-base">{monthNames[viewMonth]} {viewYear}</span>
                         <div className="flex items-center gap-1">
                           <button type="button" onClick={() => handleMonthChange(-1)} className="p-1.5 hover:bg-slate-800 text-slate-400 rounded-lg transition"><ChevronLeft size={18} /></button>
                           <button type="button" onClick={() => handleMonthChange(1)} className="p-1.5 hover:bg-slate-800 text-slate-400 rounded-lg transition"><ChevronRight size={18} /></button>
                         </div>
                       </div>
-
-                      {/* Weekdays */}
                       <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                          <span key={d} className="text-[10px] font-bold text-slate-500 uppercase">{d}</span>
-                        ))}
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <span key={d} className="text-[10px] font-bold text-slate-500 uppercase">{d}</span>)}
                       </div>
-
-                      {/* Days Grid */}
                       <div className="grid grid-cols-7 gap-1.5 text-center">
                         {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`blank-${i}`} />)}
-
                         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                           const formattedMonth = String(viewMonth + 1).padStart(2, '0');
                           const formattedDay = String(day).padStart(2, '0');
@@ -295,19 +272,11 @@ export default function AdminDashboard() {
                               onClick={() => {
                                 setDate(thisDateStr);
                                 setIsCalendarOpen(false);
-                                // Agar edit kar raha hai to seedha load karlo pages
                                 if(isPublished) handleEditPaper(thisDateStr);
                                 else setPages([{ pageNumber: 1, file: null, previewUrl: '' }]);
                               }}
                               className={`h-9 w-full text-xs font-bold rounded-xl flex items-center justify-center transition-all duration-200 
-                                ${isSelected 
-                                  ? 'bg-emerald-500 text-white shadow-lg scale-110 ring-2 ring-emerald-300/50 z-10' 
-                                  : isFuture 
-                                  ? 'text-slate-600 bg-slate-950/50 cursor-not-allowed' 
-                                  : isPublished 
-                                  ? 'bg-blue-900/60 border border-blue-500 text-blue-300 font-extrabold shadow-sm hover:scale-105 hover:bg-blue-800' 
-                                  : 'text-slate-400 bg-slate-800/50 hover:bg-slate-700 hover:text-white'
-                                }`}
+                                ${isSelected ? 'bg-emerald-500 text-white shadow-lg scale-110 ring-2 ring-emerald-300/50 z-10' : isFuture ? 'text-slate-600 bg-slate-950/50 cursor-not-allowed' : isPublished ? 'bg-blue-900/60 border border-blue-500 text-blue-300 font-extrabold shadow-sm hover:scale-105 hover:bg-blue-800' : 'text-slate-400 bg-slate-800/50 hover:bg-slate-700 hover:text-white'}`}
                               title={isFuture ? 'Future Date' : isPublished ? 'Paper Already Published (BLUE)' : 'No Paper Published'}
                             >
                               {day}
@@ -315,23 +284,19 @@ export default function AdminDashboard() {
                           );
                         })}
                       </div>
-
-                      {/* Note for Admin */}
                       <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2 text-[10px] font-bold text-slate-400">
                         <div className="w-3 h-3 rounded-full bg-blue-900/60 border border-blue-500"></div>
                         <span>Blue Dates = Already Published</span>
                       </div>
-
                     </div>
                   </>
                 )}
               </div>
-              {/* 🌟 CALENDAR END 🌟 */}
 
               <div>
                 <label className="block text-sm font-bold text-slate-300 mb-3">Pages Image Files (JPG / PNG)</label>
                 {pages.map((p, idx) => (
-                  <div key={idx} className="flex flex-col sm:flex-row gap-3 mb-4 p-4 border border-slate-800 rounded-2xl bg-slate-950/60 items-center">
+                  <div key={idx} className="group flex flex-col sm:flex-row gap-3 mb-4 p-4 border border-slate-800 hover:border-slate-700 rounded-2xl bg-slate-950/60 items-center transition-all">
                     <span className="font-bold text-slate-400 w-20">Page {p.pageNumber}:</span>
                     <input
                       type="file"
@@ -342,6 +307,18 @@ export default function AdminDashboard() {
                     {p.previewUrl && (
                       <img src={p.previewUrl} alt="Preview" className="w-16 h-20 object-cover rounded-lg border border-slate-700 shadow-md" />
                     )}
+                    
+                    {/* 🌟 GLOWING & BOUNCING DELETE BUTTON 🌟 */}
+                    {pages.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePageField(idx)}
+                        className="sm:ml-2 p-2.5 bg-red-950/40 border border-red-900/50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white hover:border-red-400 hover:shadow-[0_0_20px_rgba(239,68,68,0.8)] hover:-translate-y-1 hover:animate-pulse transition-all duration-300 flex items-center justify-center"
+                        title="Delete this page"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
                 ))}
                 <button type="button" onClick={addPageField} className="mt-2 text-sm font-bold text-emerald-400 hover:underline">
@@ -349,21 +326,15 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-xl transition disabled:opacity-50"
-              >
+              <button type="submit" disabled={loading} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-xl transition disabled:opacity-50">
                 {loading ? 'Processing & Syncing to Cloud...' : 'Publish Newspaper to Cloud'}
               </button>
             </form>
           </div>
         )}
 
-        {/* TAB 2: ALL PAPERS DYNAMIC MONTHS CALENDAR */}
         {activeTab === 'all_papers' && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Header Controls */}
             <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
               <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
                 <span>🗓️</span> All Months Publication Calendar
@@ -374,7 +345,8 @@ export default function AdminDashboard() {
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
                   className="bg-slate-950 border border-slate-700 text-indigo-300 font-bold px-3 py-1.5 rounded-xl outline-none"
-                ><option value={2030}>2030</option>
+                >
+                  <option value={2030}>2030</option>
                   <option value={2029}>2029</option>
                   <option value={2028}>2028</option>
                   <option value={2027}>2027</option>
@@ -385,7 +357,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* 12 Months Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {monthNames.map((monthName, monthIndex) => {
                 const daysInM = new Date(selectedYear, monthIndex + 1, 0).getDate();
