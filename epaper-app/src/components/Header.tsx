@@ -86,7 +86,6 @@ export default function Header({
   };
 
   return (
-    {/* 🌟 CONTAINER COMPACT AUR CENTERED KAR DIYA GAYA HAI 🌟 */}
     <header className="w-[96%] lg:w-fit mx-auto bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-3 lg:px-6 lg:py-2.5 mb-4 flex flex-col lg:flex-row flex-wrap items-center justify-center gap-3 lg:gap-5 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans mt-2">
       
       {/* 1. Date & Share */}
