@@ -86,12 +86,13 @@ export default function Header({
   };
 
   return (
-    <header className="w-full max-w-[1400px] mx-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-3 md:p-4 mb-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans mt-2">
+    {/* 🌟 CONTAINER COMPACT AUR CENTERED KAR DIYA GAYA HAI 🌟 */}
+    <header className="w-[96%] lg:w-fit mx-auto bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-3 lg:px-6 lg:py-2.5 mb-4 flex flex-col lg:flex-row flex-wrap items-center justify-center gap-3 lg:gap-5 border border-slate-200/80 transition-all duration-300 relative z-30 font-sans mt-2">
       
-      {/* 1. ROW 1 (Mobile) / LEFT (PC): Date & Share */}
-      <div className="flex w-full md:w-auto items-center justify-between md:justify-start gap-3 order-1">
-        <div className="relative flex-1 md:flex-none">
-          <button onClick={() => setIsCalendarOpen(!isCalendarOpen)} className="w-full bg-gradient-to-r from-emerald-800 to-teal-800 text-white font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2.5 text-sm shadow-md hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer">
+      {/* 1. Date & Share */}
+      <div className="flex w-full lg:w-auto items-center justify-center gap-2.5 order-1">
+        <div className="relative">
+          <button onClick={() => setIsCalendarOpen(!isCalendarOpen)} className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer">
             <Calendar size={18} className="animate-pulse text-emerald-300" />
             <span>{selectedDate.split('-').reverse().join('-')}</span>
             <ChevronDown size={16} className={`transition-transform duration-300 ${isCalendarOpen ? 'rotate-180' : ''}`} />
@@ -133,19 +134,19 @@ export default function Header({
           )}
         </div>
 
-        <button onClick={onOpenShare || onShareClick} className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md transition">
+        <button onClick={onOpenShare || onShareClick} className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-semibold px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md transition">
           <Share2 size={16} /> Share
         </button>
       </div>
 
-      {/* 2. ROW 4 (Mobile) / CENTER-LEFT (PC): Pages Navigation */}
+      {/* 2. Pages Navigation */}
       {totalPages > 0 && (
-        <div className="flex w-full md:w-auto items-center justify-center gap-1.5 overflow-x-auto py-2 px-3 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-inner order-4 md:order-2 mt-1 md:mt-0">
+        <div className="flex w-full lg:w-auto items-center justify-center gap-1.5 overflow-x-auto py-1.5 px-3 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-inner order-4 lg:order-2 mt-1 lg:mt-0">
           <button disabled={actualCurrentPage === 0} onClick={handlePrevPage} className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"><ChevronLeft size={18} /></button>
           {Array.from({ length: totalPages }, (_, i) => i).map((pgIndex) => {
             const isActive = actualCurrentPage === pgIndex;
             return (
-              <button key={pgIndex} onClick={() => handleGoToPage(pgIndex)} className={`w-8 h-8 text-xs font-extrabold rounded-full transition-all duration-300 flex-shrink-0 ${isActive ? 'bg-gradient-to-tr from-emerald-800 to-teal-700 text-white shadow-lg scale-110 ring-4 ring-emerald-300/50' : 'bg-white hover:bg-emerald-100/70 text-slate-700 hover:scale-105 border border-slate-200'}`}>
+              <button key={pgIndex} onClick={() => handleGoToPage(pgIndex)} className={`w-7 h-7 text-xs font-extrabold rounded-full transition-all duration-300 flex-shrink-0 ${isActive ? 'bg-gradient-to-tr from-emerald-800 to-teal-700 text-white shadow-lg scale-110 ring-4 ring-emerald-300/50' : 'bg-white hover:bg-emerald-100/70 text-slate-700 hover:scale-105 border border-slate-200'}`}>
                 {pgIndex + 1}
               </button>
             );
@@ -154,10 +155,9 @@ export default function Header({
         </div>
       )}
 
-      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 FINAL CROPPED LOGO HERE 🌟 */}
-      <div className="flex w-full md:w-auto items-center justify-center order-2 md:order-3">
-        {/* Nayi image ke hisaab se dimensions set kiye hain aur extreme scale hata diya hai */}
-        <div className="h-[75px] w-[250px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center p-1">
+      {/* 3. Logo */}
+      <div className="flex w-full lg:w-auto items-center justify-center order-2 lg:order-3">
+        <div className="h-[65px] w-[230px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center p-1">
           <img 
             src="https://i.postimg.cc/NFHJrqVB/sfa-removebg-preview.png" 
             alt="Rahbar's Publications Logo" 
@@ -166,16 +166,16 @@ export default function Header({
         </div>
       </div>
 
-      {/* 4. ROW 3 (Mobile) / RIGHT (PC): Visit & Admin */}
-      <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-3 order-3 md:order-4">
-        <a href="https://www.dhpc.in" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden flex-1 md:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-5 py-3 md:py-2.5 rounded-xl font-black text-sm shadow-md hover:-translate-y-1 active:scale-95 transition-all duration-300 border border-indigo-600">
+      {/* 4. Visit & Admin */}
+      <div className="flex w-full lg:w-auto items-center justify-center gap-2.5 order-3 lg:order-4">
+        <a href="https://www.dhpc.in" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-4 py-2 rounded-xl font-black text-sm shadow-md hover:-translate-y-1 active:scale-95 transition-all duration-300 border border-indigo-600">
           <span className="relative z-10 tracking-wide">VISIT</span>
           <ExternalLink size={16} className="relative z-10 group-hover:rotate-12 transition-transform duration-300" />
           <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:left-[100%] transition-all duration-700 ease-in-out z-0"></div>
         </a>
 
-        <Link href="/admin" title="Admin Login" className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-emerald-800 shadow-md transition-all active:scale-90 border border-slate-700 flex-shrink-0">
-          <User size={20} />
+        <Link href="/admin" title="Admin Login" className="p-2 bg-slate-900 text-white rounded-xl hover:bg-emerald-800 shadow-md transition-all active:scale-90 border border-slate-700 flex-shrink-0">
+          <User size={18} />
         </Link>
       </div>
 
