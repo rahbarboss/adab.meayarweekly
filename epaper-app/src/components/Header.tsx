@@ -156,14 +156,14 @@ export default function Header({
 
       {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 PERFECT SIZED LOGO HERE 🌟 */}
       <div className="flex w-full md:w-auto items-center justify-center order-2 md:order-3">
-        {/* Box ki width aur height adjust ki gayi hai taaki background box bada na lage */}
-        <div className="h-[65px] w-[260px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center">
+        {/* Box ki width (220px) aur height (75px) ekdam compact kardi hai jaisa aapko orange box me chahiye tha */}
+        <div className="h-[75px] w-[220px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center">
           <img 
             src="https://i.postimg.cc/WbVz1n04/Initial-letter-wg-logo-or-gw-logo-design-template-removebg-preview.png" 
             alt="Rahbar's Publications Logo" 
             className="w-full h-full object-contain mix-blend-multiply" 
-            // Scale thoda kam karke 3.2 kiya gaya hai taaki top cut na ho
-            style={{ transform: 'scale(3.2)' }} 
+            // Scale ko 3.8 rakha hai taaki logo bina cut hue poore compact box me phail jaye
+            style={{ transform: 'scale(3.8)' }} 
           />
         </div>
       </div>
