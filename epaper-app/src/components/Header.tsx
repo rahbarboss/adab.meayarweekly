@@ -154,14 +154,16 @@ export default function Header({
         </div>
       )}
 
-      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 FULL BIG LOGO HERE 🌟 */}
+      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 PERFECT SIZED LOGO HERE 🌟 */}
       <div className="flex w-full md:w-auto items-center justify-center order-2 md:order-3">
-        <div className="h-[75px] w-full max-w-[340px] md:w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center">
+        {/* Box ki width aur height adjust ki gayi hai taaki background box bada na lage */}
+        <div className="h-[65px] w-[260px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center">
           <img 
             src="https://i.postimg.cc/WbVz1n04/Initial-letter-wg-logo-or-gw-logo-design-template-removebg-preview.png" 
             alt="Rahbar's Publications Logo" 
             className="w-full h-full object-contain mix-blend-multiply" 
-            style={{ transform: 'scale(4.5)' }} // Inline style to force a massive zoom to fill the box
+            // Scale thoda kam karke 3.2 kiya gaya hai taaki top cut na ho
+            style={{ transform: 'scale(3.2)' }} 
           />
         </div>
       </div>
