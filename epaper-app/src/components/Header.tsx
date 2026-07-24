@@ -154,13 +154,14 @@ export default function Header({
         </div>
       )}
 
-      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 NEW LOGO HERE 🌟 */}
+      {/* 3. ROW 2 (Mobile) / CENTER-RIGHT (PC): 🌟 NEW BIG LOGO HERE 🌟 */}
       <div className="flex w-full md:w-auto items-center justify-center order-2 md:order-3">
-        <div className="h-[60px] w-full max-w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-2 flex items-center justify-center">
+        <div className="h-[60px] w-full max-w-[340px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden px-4 flex items-center justify-center">
           <img 
-            src="https://i.postimg.cc/cJXVysZD/Initial-letter-wg-logo-or-gw-logo-design-template.png" 
+            src="https://i.postimg.cc/WbVz1n04/Initial-letter-wg-logo-or-gw-logo-design-template-removebg-preview.png" 
             alt="Rahbar's Publications Logo" 
-            className="w-full h-full object-contain mix-blend-multiply scale-110" 
+            // Yahan scale-[2.5] laga diya hai taaki extra white space cover ho jaye aur logo bada dikhe
+            className="w-full h-full object-contain scale-[2.5] mix-blend-multiply" 
           />
         </div>
       </div>
