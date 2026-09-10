@@ -8,6 +8,7 @@ export default function Viewer({ pages, currentPageIndex }: any) {
   const [zoom, setZoom] = useState(100);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Jab page change ho, toh Zoom aur Scroll dono reset ho jayenge
   useEffect(() => {
     setZoom(100);
     if (scrollContainerRef.current) {
@@ -43,27 +44,24 @@ export default function Viewer({ pages, currentPageIndex }: any) {
       {/* 📜 SCROLLABLE PAPER AREA */}
       <div
         ref={scrollContainerRef}
-        className="w-full h-full overflow-auto p-1 scroll-smooth [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-slate-900/50 [&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-500"
+        className="w-full h-full overflow-y-auto overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-slate-900/50 [&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-500"
       >
-        <div
-          className={`mx-auto transition-all duration-300 ease-out origin-top flex justify-center ${zoom === 100 ? 'h-full items-center' : 'h-auto items-start'}`}
-          style={{
-            width: zoom === 100 ? '100%' : `${zoom}%`,
-            minWidth: '100%'
-          }}
-        >
-          <img
-            src={currentPage.imageUrl}
-            alt={`Page ${currentPage.pageNumber}`}
-            className="bg-white shadow-2xl transition-all duration-300"
+        {/* 🌟 Yahan pb-24 (padding-bottom) lagaya hai taaki page niche se bilkul na kate 🌟 */}
+        <div className="w-full min-h-full flex justify-center items-start p-2 pb-24">
+          <div
+            className="transition-all duration-300 ease-out origin-top flex justify-center"
             style={{
-              maxWidth: '100%',
-              maxHeight: zoom === 100 ? '100%' : 'none',
-              width: zoom === 100 ? '100%' : '100%',
-              height: zoom === 100 ? '100%' : 'auto',
-              objectFit: 'contain' // 🌟 YE LINE PAGE KO KATE BINA FULL SHOW KAREGI 🌟
+              width: zoom === 100 ? '100%' : `${zoom}%`,
+              maxWidth: zoom === 100 ? '1200px' : 'none' // Badi screens par zyada na phaile uske liye
             }}
-          />
+          >
+            <img
+              src={currentPage.imageUrl}
+              alt={`Page ${currentPage.pageNumber}`}
+              // w-full aur h-auto lagaya hai taaki page pehle ki tarah bada aur clear dikhe
+              className="w-full h-auto bg-white shadow-2xl transition-all duration-300" 
+            />
+          </div>
         </div>
       </div>
 
