@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown, ExternalLink } from 'lucide-react';
+import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { getAllPapersFromDB } from '@/lib/data';
 
@@ -20,6 +20,10 @@ export default function Header({
 }: any) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [uploadedDates, setUploadedDates] = useState<string[]>([]);
+  
+  // 🌟 SECRET ADMIN LOGIN STATE 🌟
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
 
   const todayObj = new Date();
   const todayStr = todayObj.toISOString().split('T')[0]; 
@@ -40,6 +44,30 @@ export default function Header({
     }
     fetchDates();
   }, [isCalendarOpen]);
+
+  // Agar user ruk jata hai, toh click count wapas zero ho jayega (2 seconds me)
+  useEffect(() => {
+    if (clickCount > 0 && clickCount < 5) {
+      const timer = setTimeout(() => setClickCount(0), 1500); 
+      return () => clearTimeout(timer);
+    }
+  }, [clickCount]);
+
+  // 🌟 MAGIC 5-CLICK FUNCTION 🌟
+  const handleCalendarClick = () => {
+    setIsCalendarOpen(!isCalendarOpen);
+    if (!showAdmin) {
+      setClickCount((prev) => {
+        const newCount = prev + 1;
+        if (newCount >= 5) {
+          setShowAdmin(true);
+          setIsCalendarOpen(false); // Calendar band kar do jab unlock ho jaye
+          return 0;
+        }
+        return newCount;
+      });
+    }
+  };
 
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -86,14 +114,16 @@ export default function Header({
   };
 
   return (
-    // 🌟 YAHAN MAINE WRAPPER ADD KIYA HAI JO 100% CENTER KAREGA 🌟
     <div className="w-full flex justify-center px-2 z-40 relative">
       <header className="w-fit max-w-full bg-white/95 backdrop-blur-md rounded-full shadow-lg p-2 lg:px-4 lg:py-2 mb-2 mt-2 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-3 border border-slate-200/80 transition-all duration-300 font-sans">
         
         {/* 1. Date & Share */}
         <div className="flex items-center justify-center gap-2 order-1">
           <div className="relative">
-            <button onClick={() => setIsCalendarOpen(!isCalendarOpen)} className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer">
+            <button 
+              onClick={handleCalendarClick} 
+              className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm shadow-md hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+            >
               <Calendar size={18} className="animate-pulse text-emerald-300" />
               <span>{selectedDate.split('-').reverse().join('-')}</span>
               <ChevronDown size={16} className={`transition-transform duration-300 ${isCalendarOpen ? 'rotate-180' : ''}`} />
@@ -142,7 +172,7 @@ export default function Header({
 
         {/* 2. Pages Navigation */}
         {totalPages > 0 && (
-          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1.5 px-2 bg-slate-100/80 rounded-xl border border-slate-200 shadow-inner order-4 lg:order-2 mt-1 lg:mt-0">
+          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1.5 px-2 bg-slate-100/80 rounded-xl border border-slate-200 shadow-inner order-2 mt-1 lg:mt-0">
             <button disabled={actualCurrentPage === 0} onClick={handlePrevPage} className="p-1.5 rounded-lg bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"><ChevronLeft size={18} /></button>
             {Array.from({ length: totalPages }, (_, i) => i).map((pgIndex) => {
               const isActive = actualCurrentPage === pgIndex;
@@ -156,29 +186,15 @@ export default function Header({
           </div>
         )}
 
-        {/* 3. Logo */}
-        <div className="flex items-center justify-center order-2 lg:order-3">
-          <div className="h-[55px] w-[200px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex items-center justify-center p-1">
-            <img 
-              src="https://i.postimg.cc/NFHJrqVB/sfa-removebg-preview.png" 
-              alt="Rahbar's Publications Logo" 
-              className="w-full h-full object-contain mix-blend-multiply scale-110" 
-            />
+        {/* 3. SECRET ADMIN BUTTON - Sirf 5 baar click karne ke baad aayega */}
+        {showAdmin && (
+          <div className="flex items-center justify-center order-3 animate-in fade-in zoom-in duration-300">
+            <Link href="/admin" title="Admin Portal" className="group flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-emerald-400 rounded-xl hover:bg-slate-800 shadow-xl transition-all active:scale-95 border border-emerald-500/40">
+              <User size={16} className="animate-pulse" />
+              <span className="text-xs font-black tracking-wide">ADMIN</span>
+            </Link>
           </div>
-        </div>
-
-        {/* 4. Visit & Admin */}
-        <div className="flex items-center justify-center gap-2 order-3 lg:order-4">
-          <a href="https://www.dhpc.in" target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-4 py-2 rounded-xl font-black text-sm shadow-md hover:-translate-y-1 active:scale-95 transition-all duration-300 border border-indigo-600">
-            <span className="relative z-10 tracking-wide">VISIT</span>
-            <ExternalLink size={16} className="relative z-10 group-hover:rotate-12 transition-transform duration-300" />
-            <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:left-[100%] transition-all duration-700 ease-in-out z-0"></div>
-          </a>
-
-          <Link href="/admin" title="Admin Login" className="p-2 bg-slate-900 text-white rounded-xl hover:bg-emerald-800 shadow-md transition-all active:scale-90 border border-slate-700 flex-shrink-0">
-            <User size={18} />
-          </Link>
-        </div>
+        )}
 
       </header>
     </div>
