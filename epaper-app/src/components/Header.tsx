@@ -45,7 +45,6 @@ export default function Header({
     fetchDates();
   }, [isCalendarOpen]);
 
-  // Agar user ruk jata hai, toh click count wapas zero ho jayega (2 seconds me)
   useEffect(() => {
     if (clickCount > 0 && clickCount < 5) {
       const timer = setTimeout(() => setClickCount(0), 1500); 
@@ -53,7 +52,6 @@ export default function Header({
     }
   }, [clickCount]);
 
-  // 🌟 MAGIC 5-CLICK FUNCTION 🌟
   const handleCalendarClick = () => {
     setIsCalendarOpen(!isCalendarOpen);
     if (!showAdmin) {
@@ -61,7 +59,7 @@ export default function Header({
         const newCount = prev + 1;
         if (newCount >= 5) {
           setShowAdmin(true);
-          setIsCalendarOpen(false); // Calendar band kar do jab unlock ho jaye
+          setIsCalendarOpen(false); 
           return 0;
         }
         return newCount;
@@ -114,11 +112,12 @@ export default function Header({
   };
 
   return (
-    <div className="w-full flex justify-center px-2 z-40 relative">
-      <header className="w-fit max-w-full bg-white/95 backdrop-blur-md rounded-full shadow-lg p-2 lg:px-4 lg:py-2 mb-2 mt-2 flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-3 border border-slate-200/80 transition-all duration-300 font-sans">
+    // 🌟 100% BULLETPROOF CENTER WRAPPER 🌟
+    <div className="w-full flex justify-center items-center pt-2 pb-4 px-2 z-40 relative">
+      <header className="inline-flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 bg-white/95 backdrop-blur-md rounded-full shadow-lg p-2 md:px-4 md:py-2 border border-slate-200/80 transition-all duration-300 font-sans mx-auto">
         
         {/* 1. Date & Share */}
-        <div className="flex items-center justify-center gap-2 order-1">
+        <div className="flex items-center justify-center gap-2">
           <div className="relative">
             <button 
               onClick={handleCalendarClick} 
@@ -132,7 +131,7 @@ export default function Header({
             {isCalendarOpen && (
               <>
                 <div className="fixed inset-0 z-40 bg-black/10" onClick={() => setIsCalendarOpen(false)} />
-                <div className="absolute left-0 mt-3 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-top-3 duration-200">
+                <div className="absolute left-0 lg:left-1/2 lg:-translate-x-1/2 mt-3 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 animate-in fade-in slide-in-from-top-3 duration-200">
                   <div className="flex items-center justify-between mb-4 pb-2 border-b">
                     <span className="font-extrabold text-slate-800 text-base">{monthNames[viewMonth]} {viewYear}</span>
                     <div className="flex items-center gap-1">
@@ -172,7 +171,7 @@ export default function Header({
 
         {/* 2. Pages Navigation */}
         {totalPages > 0 && (
-          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1.5 px-2 bg-slate-100/80 rounded-xl border border-slate-200 shadow-inner order-2 mt-1 lg:mt-0">
+          <div className="flex items-center justify-center gap-1.5 overflow-x-auto py-1.5 px-2 bg-slate-100/80 rounded-xl border border-slate-200 shadow-inner">
             <button disabled={actualCurrentPage === 0} onClick={handlePrevPage} className="p-1.5 rounded-lg bg-white hover:bg-emerald-50 text-slate-700 disabled:opacity-30 shadow-sm transition active:scale-90"><ChevronLeft size={18} /></button>
             {Array.from({ length: totalPages }, (_, i) => i).map((pgIndex) => {
               const isActive = actualCurrentPage === pgIndex;
@@ -186,9 +185,9 @@ export default function Header({
           </div>
         )}
 
-        {/* 3. SECRET ADMIN BUTTON - Sirf 5 baar click karne ke baad aayega */}
+        {/* 3. SECRET ADMIN BUTTON */}
         {showAdmin && (
-          <div className="flex items-center justify-center order-3 animate-in fade-in zoom-in duration-300">
+          <div className="flex items-center justify-center animate-in fade-in zoom-in duration-300">
             <Link href="/admin" title="Admin Portal" className="group flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-emerald-400 rounded-xl hover:bg-slate-800 shadow-xl transition-all active:scale-95 border border-emerald-500/40">
               <User size={16} className="animate-pulse" />
               <span className="text-xs font-black tracking-wide">ADMIN</span>
