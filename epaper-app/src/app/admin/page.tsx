@@ -3,8 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '@/lib/data';
-// 🌟 TRASH ICON ADD KIYA GAYA HAI 🌟
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2, FileText, Loader2 } from 'lucide-react';
+
+// 🌟 PDF.js Library Setup for Client Side 🌟
+import * as pdfjsLib from 'pdfjs-dist';
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+}
 
 interface PageInput {
   pageNumber: number;
@@ -24,16 +29,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // All Papers State
   const [publishedPapers, setPublishedPapers] = useState<Newspaper[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
-  // Custom Calendar State for Upload Form
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
 
-  // Fetch Published Papers
   const fetchAllPapers = async () => {
     const papers = await getAllPapersFromDB();
     setPublishedPapers(papers);
@@ -54,6 +56,61 @@ export default function AdminDashboard() {
     }
   };
 
+  // 🌟 MAGIC FUNCTION: EXTRACT PAGES FROM PDF 🌟
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a valid PDF file.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('🔄 Extracting pages from PDF in HD... Please wait.');
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const totalPages = pdf.numPages;
+      const extractedPages: PageInput[] = [];
+
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdf.getPage(i);
+        // Scale 2.0 = High Definition Quality
+        const viewport = page.getViewport({ scale: 2.0 }); 
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        if (blob) {
+          const imageFile = new File([blob], `${date}_page_${i}.jpg`, { type: 'image/jpeg' });
+          const previewUrl = URL.createObjectURL(imageFile);
+          
+          extractedPages.push({
+            pageNumber: i,
+            file: imageFile,
+            previewUrl: previewUrl
+          });
+        }
+      }
+
+      setPages(extractedPages);
+      setMessage(`✅ PDF Processed! ${totalPages} pages extracted automatically. Check previews below and click Publish.`);
+    } catch (err) {
+      console.error("PDF Processing Error: ", err);
+      setMessage('❌ Error extracting PDF pages. Is the PDF corrupted?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFileChange = (index: number, file: File | null) => {
     const updated = [...pages];
     updated[index].file = file;
@@ -67,15 +124,12 @@ export default function AdminDashboard() {
     setPages([...pages, { pageNumber: pages.length + 1, file: null, previewUrl: '' }]);
   };
 
-  // 🌟 NEW FUNCTION: DELETE PAGE & AUTO-RENUMBERING 🌟
   const removePageField = (indexToRemove: number) => {
     if (pages.length === 1) {
       alert('Kam se kam ek page hona zaroori hai!');
       return;
     }
-    // Delete chosen page
     const updated = pages.filter((_, idx) => idx !== indexToRemove);
-    // Re-number remaining pages properly
     const renumbered = updated.map((page, idx) => ({
       ...page,
       pageNumber: idx + 1
@@ -88,7 +142,7 @@ export default function AdminDashboard() {
     if (!date) return alert('Select Date');
 
     setLoading(true);
-    setMessage('');
+    setMessage('🚀 Uploading pages to Cloud... please wait.');
 
     try {
       const uploadedPages = [];
@@ -113,7 +167,7 @@ export default function AdminDashboard() {
         } else if (page.previewUrl) {
           uploadedPages.push({ pageNumber: page.pageNumber, imageUrl: page.previewUrl });
         } else {
-          throw new Error(`Select file for Page ${page.pageNumber}`);
+          throw new Error(`Missing content for Page ${page.pageNumber}`);
         }
       }
 
@@ -218,11 +272,11 @@ export default function AdminDashboard() {
         {activeTab === 'upload' && (
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-3xl mx-auto animate-in fade-in duration-300">
             <h2 className="text-xl font-bold text-emerald-400 mb-6 flex items-center gap-2">
-              <span>📰</span> Upload / Edit E-Paper Edition
+              <span>📰</span> Upload E-Paper Edition
             </h2>
 
             {message && (
-              <div className={`p-4 rounded-xl mb-6 font-bold text-sm ${message.includes('✅') ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-300' : 'bg-red-950/80 border border-red-800 text-red-300'}`}>
+              <div className={`p-4 rounded-xl mb-6 font-bold text-sm ${message.includes('✅') ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-300' : message.includes('🔄') || message.includes('🚀') ? 'bg-blue-950/80 border border-blue-800 text-blue-300' : 'bg-red-950/80 border border-red-800 text-red-300'}`}>
                 {message}
               </div>
             )}
@@ -239,6 +293,7 @@ export default function AdminDashboard() {
                   <span className="text-slate-500 text-xs font-semibold bg-slate-800 px-3 py-1 rounded-lg">Change Date</span>
                 </button>
 
+                {/* Calendar Dropdown */}
                 {isCalendarOpen && (
                   <>
                     <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={() => setIsCalendarOpen(false)} />
@@ -284,63 +339,94 @@ export default function AdminDashboard() {
                           );
                         })}
                       </div>
-                      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                        <div className="w-3 h-3 rounded-full bg-blue-900/60 border border-blue-500"></div>
-                        <span>Blue Dates = Already Published</span>
-                      </div>
                     </div>
                   </>
                 )}
               </div>
 
+              {/* 🌟 NEW PDF AUTO-EXTRACTOR SECTION 🌟 */}
+              <div className="mb-6 p-6 mt-4 border-2 border-dashed border-emerald-500/40 rounded-3xl bg-emerald-950/10 text-center hover:bg-emerald-950/20 transition-colors">
+                <FileText size={42} className="mx-auto text-emerald-400 mb-3" />
+                <h3 className="text-lg font-black text-emerald-300 mb-1">Upload Full PDF Document</h3>
+                <p className="text-xs text-slate-400 mb-5">Upload a single PDF. We will auto-extract all pages into HD images instantly.</p>
+                
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  id="pdf-upload"
+                  className="hidden"
+                  onChange={handlePdfUpload}
+                  disabled={loading}
+                />
+                <label 
+                  htmlFor="pdf-upload"
+                  className={`cursor-pointer inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition-all ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 hover:shadow-emerald-900/50'}`}
+                >
+                  {loading && message.includes('Extracting') ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
+                  {loading && message.includes('Extracting') ? 'Extracting Pages...' : 'Select PDF File'}
+                </label>
+              </div>
+
+              {/* Pages Preview / Manual Edit Section */}
               <div>
-                <label className="block text-sm font-bold text-slate-300 mb-3">Pages Image Files (JPG / PNG)</label>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-bold text-slate-300">Extracted Pages (Review before Publish)</label>
+                  <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded-md">{pages.length} Pages</span>
+                </div>
+
                 {pages.map((p, idx) => (
-                  <div key={idx} className="group flex flex-col sm:flex-row gap-3 mb-4 p-4 border border-slate-800 hover:border-slate-700 rounded-2xl bg-slate-950/60 items-center transition-all">
-                    <span className="font-bold text-slate-400 w-20">Page {p.pageNumber}:</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(idx, e.target.files?.[0] || null)}
-                      className="flex-1 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-800 file:text-white cursor-pointer hover:file:bg-emerald-700 transition"
-                    />
-                    {p.previewUrl && (
-                      <img src={p.previewUrl} alt="Preview" className="w-16 h-20 object-cover rounded-lg border border-slate-700 shadow-md" />
+                  <div key={idx} className="group flex flex-col sm:flex-row gap-3 mb-4 p-3 border border-slate-800 hover:border-slate-700 rounded-2xl bg-slate-950/60 items-center transition-all">
+                    <span className="font-bold text-slate-400 w-16 text-center">Pg {p.pageNumber}:</span>
+                    
+                    {p.previewUrl ? (
+                      <div className="flex-1 flex items-center gap-4">
+                        <img src={p.previewUrl} alt={`Page ${p.pageNumber}`} className="w-16 h-20 object-cover rounded-lg border border-slate-700 shadow-md" />
+                        <span className="text-xs text-emerald-400 font-bold bg-emerald-950/50 px-2 py-1 rounded">Ready for upload</span>
+                      </div>
+                    ) : (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(idx, e.target.files?.[0] || null)}
+                        className="flex-1 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white cursor-pointer hover:file:bg-slate-700 transition"
+                      />
                     )}
                     
-                    {/* 🌟 GLOWING & BOUNCING DELETE BUTTON 🌟 */}
                     {pages.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removePageField(idx)}
-                        className="sm:ml-2 p-2.5 bg-red-950/40 border border-red-900/50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white hover:border-red-400 hover:shadow-[0_0_20px_rgba(239,68,68,0.8)] hover:-translate-y-1 hover:animate-pulse transition-all duration-300 flex items-center justify-center"
-                        title="Delete this page"
+                        className="sm:ml-2 p-2.5 bg-red-950/40 border border-red-900/50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all duration-300 flex items-center justify-center"
+                        title="Remove this page"
                       >
                         <Trash2 size={18} />
                       </button>
                     )}
                   </div>
                 ))}
-                <button type="button" onClick={addPageField} className="mt-2 text-sm font-bold text-emerald-400 hover:underline">
-                  + Add Another Page
+                
+                <button type="button" onClick={addPageField} className="mt-2 text-sm font-bold text-slate-400 hover:text-white">
+                  + Add manual image page
                 </button>
               </div>
 
-              <button type="submit" disabled={loading} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-xl transition disabled:opacity-50">
-                {loading ? 'Processing & Syncing to Cloud...' : 'Publish Newspaper to Cloud'}
+              <button type="submit" disabled={loading} className={`w-full py-4 text-white font-bold rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 ${loading ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:scale-[1.02]'}`}>
+                {loading ? <Loader2 size={20} className="animate-spin" /> : '🚀'}
+                {loading ? 'Uploading Pages to Cloud...' : 'Publish Newspaper to Cloud'}
               </button>
             </form>
           </div>
         )}
 
+        {/* All Papers Tab */}
         {activeTab === 'all_papers' && (
           <div className="space-y-8 animate-in fade-in duration-300">
+            {/* Same Calendar logic as before */}
             <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
               <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
-                <span>🗓️</span> All Months Publication Calendar
+                <span>🗓️</span> Publication Calendar
               </h2>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-400">Year:</span>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -352,7 +438,6 @@ export default function AdminDashboard() {
                   <option value={2027}>2027</option>
                   <option value={2026}>2026</option>
                   <option value={2025}>2025</option>
-                  <option value={2024}>2024</option>
                 </select>
               </div>
             </div>
@@ -363,7 +448,7 @@ export default function AdminDashboard() {
                 const firstDayIdx = new Date(selectedYear, monthIndex, 1).getDay();
 
                 return (
-                  <div key={monthName} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 hover:border-slate-700 transition shadow-lg flex flex-col">
+                  <div key={monthName} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col">
                     <h3 className="text-lg font-black text-indigo-300 mb-4 pb-2 border-b border-slate-800 text-center">
                       {monthName} {selectedYear}
                     </h3>
