@@ -5,10 +5,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '@/lib/data';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2, FileText, Loader2 } from 'lucide-react';
 
-// 🌟 PDF.js Library Setup for Client Side 🌟
+// 🌟 FIX: PDF.js Library ka Naya .mjs Worker Link 🌟
 import * as pdfjsLib from 'pdfjs-dist';
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  // Naye version me 'pdf.worker.min.mjs' use hota hai
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 }
 
 interface PageInput {
@@ -103,9 +104,10 @@ export default function AdminDashboard() {
 
       setPages(extractedPages);
       setMessage(`✅ PDF Processed! ${totalPages} pages extracted automatically. Check previews below and click Publish.`);
-    } catch (err) {
+    } catch (err: any) {
       console.error("PDF Processing Error: ", err);
-      setMessage('❌ Error extracting PDF pages. Is the PDF corrupted?');
+      // Ab ye error screen par exact batayega ki problem kya hai
+      setMessage(`❌ PDF Error: ${err.message || 'File read nahi ho paayi'}`);
     } finally {
       setLoading(false);
     }
@@ -293,7 +295,6 @@ export default function AdminDashboard() {
                   <span className="text-slate-500 text-xs font-semibold bg-slate-800 px-3 py-1 rounded-lg">Change Date</span>
                 </button>
 
-                {/* Calendar Dropdown */}
                 {isCalendarOpen && (
                   <>
                     <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={() => setIsCalendarOpen(false)} />
@@ -344,7 +345,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* 🌟 NEW PDF AUTO-EXTRACTOR SECTION 🌟 */}
+              {/* 🌟 PDF AUTO-EXTRACTOR SECTION 🌟 */}
               <div className="mb-6 p-6 mt-4 border-2 border-dashed border-emerald-500/40 rounded-3xl bg-emerald-950/10 text-center hover:bg-emerald-950/20 transition-colors">
                 <FileText size={42} className="mx-auto text-emerald-400 mb-3" />
                 <h3 className="text-lg font-black text-emerald-300 mb-1">Upload Full PDF Document</h3>
@@ -421,7 +422,6 @@ export default function AdminDashboard() {
         {/* All Papers Tab */}
         {activeTab === 'all_papers' && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Same Calendar logic as before */}
             <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
               <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
                 <span>🗓️</span> Publication Calendar
