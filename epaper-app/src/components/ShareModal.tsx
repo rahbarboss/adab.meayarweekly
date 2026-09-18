@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { X, Share2, Copy, Check, Download, Loader2 } from 'lucide-react';
-import { getPaperFromDB } from '../lib/data'
+import { getPaperFromDB } from '../lib/data';
 import { jsPDF } from 'jspdf'; 
 
 export default function ShareModal({ isOpen, onClose, selectedDate }: any) {
