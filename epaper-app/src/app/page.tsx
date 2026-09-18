@@ -2,11 +2,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Header from '@/components/Header';
-import Viewer from '@/components/Viewer';
-import Thumbnails from '@/components/Thumbnails';
-import ShareModal from '@/components/ShareModal';
-import { getPaperFromDB, getAllPapersFromDB, Newspaper } from '@/lib/data';
+// 🌟 FIX: '@/' hata kar '../' lagaya gaya hai
+import Header from '../components/Header';
+import Viewer from '../components/Viewer';
+import Thumbnails from '../components/Thumbnails';
+import ShareModal from '../components/ShareModal';
+import { getPaperFromDB, getAllPapersFromDB, Newspaper } from '../lib/data';
 
 export default function Home() {
   const todayStr = new Date().toISOString().split('T')[0];
