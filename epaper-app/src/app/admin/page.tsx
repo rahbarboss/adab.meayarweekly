@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-// 🌟 FIX: '@/' hata kar '../../' lagaya gaya hai
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '../../lib/data';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2, FileText, Loader2 } from 'lucide-react';
 
@@ -57,7 +56,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // 🌟 MAGIC FUNCTION: EXTRACT PAGES FROM PDF 🌟
+  // 🌟 MAGIC FUNCTION: EXTRACT PAGES FROM PDF IN ULTRA HD 🌟
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -67,7 +66,7 @@ export default function AdminDashboard() {
     }
 
     setLoading(true);
-    setMessage('🔄 Extracting pages from PDF in HD... Please wait.');
+    setMessage('🔄 Extracting pages from PDF in ULTRA HD... Please wait.');
 
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -77,8 +76,8 @@ export default function AdminDashboard() {
 
       for (let i = 1; i <= totalPages; i++) {
         const page = await pdf.getPage(i);
-        // Scale 2.0 = High Definition Quality
-        const viewport = page.getViewport({ scale: 2.0 }); 
+        // 🌟 FIX: Scale 4.0 kar diya hai Ultra HD zoom ke liye
+        const viewport = page.getViewport({ scale: 4.0 }); 
         
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -89,7 +88,8 @@ export default function AdminDashboard() {
 
         await page.render({ canvasContext: ctx, viewport }).promise;
 
-        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        // 🌟 FIX: Quality 1.0 (100%) kar di hai taaki pixels phate nahi
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 1.0));
         if (blob) {
           const imageFile = new File([blob], `${date}_page_${i}.jpg`, { type: 'image/jpeg' });
           const previewUrl = URL.createObjectURL(imageFile);
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
       }
 
       setPages(extractedPages);
-      setMessage(`✅ PDF Processed! ${totalPages} pages extracted automatically. Check previews below and click Publish.`);
+      setMessage(`✅ PDF Processed! ${totalPages} ULTRA HD pages extracted automatically. Check previews below and click Publish.`);
     } catch (err) {
       console.error("PDF Processing Error: ", err);
       setMessage('❌ Error extracting PDF pages. Is the PDF corrupted?');
