@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     config.resolve.alias.canvas = false;
     return config;
   },
+  // Vercel ke naye Turbopack build system ko shant karne ke liye
+  turbopack: {},
 };
 
 export default nextConfig;
