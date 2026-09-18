@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['canvas'],
+  experimental: {
+    serverComponentsExternalPackages: ['canvas'],
+  },
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;
