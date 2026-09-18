@@ -5,10 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '@/lib/data';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2, FileText, Loader2 } from 'lucide-react';
 
-// 🌟 BULLETPROOF FIX: Super Stable PDF.js Version 3 🌟
+// 🌟 PDF.js Library Setup for Client Side 🌟
 import * as pdfjsLib from 'pdfjs-dist';
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 }
 
 interface PageInput {
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // 🌟 PDF EXTRACTOR 🌟
+  // 🌟 MAGIC FUNCTION: EXTRACT PAGES FROM PDF 🌟
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -76,6 +76,7 @@ export default function AdminDashboard() {
 
       for (let i = 1; i <= totalPages; i++) {
         const page = await pdf.getPage(i);
+        // Scale 2.0 = High Definition Quality
         const viewport = page.getViewport({ scale: 2.0 }); 
         
         const canvas = document.createElement('canvas');
@@ -102,9 +103,9 @@ export default function AdminDashboard() {
 
       setPages(extractedPages);
       setMessage(`✅ PDF Processed! ${totalPages} pages extracted automatically. Check previews below and click Publish.`);
-    } catch (err: any) {
+    } catch (err) {
       console.error("PDF Processing Error: ", err);
-      setMessage(`❌ PDF Error: ${err.message || 'File read nahi ho paayi'}`);
+      setMessage('❌ Error extracting PDF pages. Is the PDF corrupted?');
     } finally {
       setLoading(false);
     }
@@ -292,6 +293,7 @@ export default function AdminDashboard() {
                   <span className="text-slate-500 text-xs font-semibold bg-slate-800 px-3 py-1 rounded-lg">Change Date</span>
                 </button>
 
+                {/* Calendar Dropdown */}
                 {isCalendarOpen && (
                   <>
                     <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={() => setIsCalendarOpen(false)} />
@@ -330,6 +332,7 @@ export default function AdminDashboard() {
                               }}
                               className={`h-9 w-full text-xs font-bold rounded-xl flex items-center justify-center transition-all duration-200 
                                 ${isSelected ? 'bg-emerald-500 text-white shadow-lg scale-110 ring-2 ring-emerald-300/50 z-10' : isFuture ? 'text-slate-600 bg-slate-950/50 cursor-not-allowed' : isPublished ? 'bg-blue-900/60 border border-blue-500 text-blue-300 font-extrabold shadow-sm hover:scale-105 hover:bg-blue-800' : 'text-slate-400 bg-slate-800/50 hover:bg-slate-700 hover:text-white'}`}
+                              title={isFuture ? 'Future Date' : isPublished ? 'Paper Already Published (BLUE)' : 'No Paper Published'}
                             >
                               {day}
                             </button>
@@ -341,7 +344,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* 🌟 PDF AUTO-EXTRACTOR SECTION 🌟 */}
+              {/* 🌟 NEW PDF AUTO-EXTRACTOR SECTION 🌟 */}
               <div className="mb-6 p-6 mt-4 border-2 border-dashed border-emerald-500/40 rounded-3xl bg-emerald-950/10 text-center hover:bg-emerald-950/20 transition-colors">
                 <FileText size={42} className="mx-auto text-emerald-400 mb-3" />
                 <h3 className="text-lg font-black text-emerald-300 mb-1">Upload Full PDF Document</h3>
@@ -418,6 +421,7 @@ export default function AdminDashboard() {
         {/* All Papers Tab */}
         {activeTab === 'all_papers' && (
           <div className="space-y-8 animate-in fade-in duration-300">
+            {/* Same Calendar logic as before */}
             <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
               <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
                 <span>🗓️</span> Publication Calendar
