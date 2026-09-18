@@ -4,8 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Share2, ChevronLeft, ChevronRight, User, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import { getAllPapersFromDB } from '@/lib/data';
-
+import { getAllPapersFromDB } from '../lib/data';
 export default function Header({
   selectedDate,
   setSelectedDate,
