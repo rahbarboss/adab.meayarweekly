@@ -1,19 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Server ke liye ignore
+  // Server ke liye
   serverExternalPackages: ['canvas'],
   
-  // Purane Webpack system ke liye ignore
+  // Purane Webpack ke liye
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;
   },
   
-  // Naye Vercel Turbopack system ke liye ignore (Yehi error de raha tha!)
+  // Naye Turbopack ke liye (FIXED)
   turbopack: {
     resolveAlias: {
-      canvas: false,
+      canvas: './empty.js',
     },
   },
 };
