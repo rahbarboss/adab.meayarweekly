@@ -5,11 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase, savePaperToDB, getAllPapersFromDB, getPaperFromDB, deletePaperFromDB, Newspaper } from '@/lib/data';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Trash2, FileText, Loader2 } from 'lucide-react';
 
-// 🌟 FIX: PDF.js Library ka Naya .mjs Worker Link 🌟
+// 🌟 BULLETPROOF FIX: Super Stable PDF.js Version 3 🌟
 import * as pdfjsLib from 'pdfjs-dist';
 if (typeof window !== 'undefined') {
-  // Naye version me 'pdf.worker.min.mjs' use hota hai
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 }
 
 interface PageInput {
@@ -57,7 +56,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // 🌟 MAGIC FUNCTION: EXTRACT PAGES FROM PDF 🌟
+  // 🌟 PDF EXTRACTOR 🌟
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,7 +76,6 @@ export default function AdminDashboard() {
 
       for (let i = 1; i <= totalPages; i++) {
         const page = await pdf.getPage(i);
-        // Scale 2.0 = High Definition Quality
         const viewport = page.getViewport({ scale: 2.0 }); 
         
         const canvas = document.createElement('canvas');
@@ -106,7 +104,6 @@ export default function AdminDashboard() {
       setMessage(`✅ PDF Processed! ${totalPages} pages extracted automatically. Check previews below and click Publish.`);
     } catch (err: any) {
       console.error("PDF Processing Error: ", err);
-      // Ab ye error screen par exact batayega ki problem kya hai
       setMessage(`❌ PDF Error: ${err.message || 'File read nahi ho paayi'}`);
     } finally {
       setLoading(false);
@@ -333,7 +330,6 @@ export default function AdminDashboard() {
                               }}
                               className={`h-9 w-full text-xs font-bold rounded-xl flex items-center justify-center transition-all duration-200 
                                 ${isSelected ? 'bg-emerald-500 text-white shadow-lg scale-110 ring-2 ring-emerald-300/50 z-10' : isFuture ? 'text-slate-600 bg-slate-950/50 cursor-not-allowed' : isPublished ? 'bg-blue-900/60 border border-blue-500 text-blue-300 font-extrabold shadow-sm hover:scale-105 hover:bg-blue-800' : 'text-slate-400 bg-slate-800/50 hover:bg-slate-700 hover:text-white'}`}
-                              title={isFuture ? 'Future Date' : isPublished ? 'Paper Already Published (BLUE)' : 'No Paper Published'}
                             >
                               {day}
                             </button>
