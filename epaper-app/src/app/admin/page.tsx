@@ -1,9 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/data';
+
 // Import PDF.js
 import * as pdfjsLib from 'pdfjs-dist';
-// Standard worker setup for Next.js
 if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 }
@@ -22,13 +22,34 @@ export default function AdminPage() {
   const [extractedPages, setExtractedPages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  
+  // Storage for highlighted calendar dates
+  const [publishedDates, setPublishedDates] = useState<string[]>([]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'rahbar786' && password === 'rahbar@786') setIsLoggedIn(true);
+    if (username === 'admin' && password === 'admin@123' || username === 'rahbar786' && password === 'rahbar@786') setIsLoggedIn(true);
   };
 
-  // 1. PDF File Input Change & Auto-Extract
+  // Fetch published dates for the calendar tab
+  useEffect(() => {
+    async function fetchPublishedDates() {
+      if (activeTab === 'calendar' && isLoggedIn) {
+        try {
+          const { data: files } = await supabase.storage.from('newspapers').list('', { limit: 1000 });
+          if (files) {
+            const dates = files.filter(f => f.name.includes('_page_')).map(f => f.name.substring(0, 10));
+            setPublishedDates(Array.from(new Set(dates)));
+          }
+        } catch (err) {
+          console.error("Error fetching dates:", err);
+        }
+      }
+    }
+    fetchPublishedDates();
+  }, [activeTab, isLoggedIn]);
+
+  // PDF Extract Logic
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -44,7 +65,7 @@ export default function AdminPage() {
       const newPages = [];
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2.0 }); // High quality extract
+        const viewport = page.getViewport({ scale: 2.0 }); 
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
@@ -65,55 +86,26 @@ export default function AdminPage() {
     setIsProcessing(false);
   };
 
-  // 2. Publish to Supabase Storage & Database
+  // Publish to Supabase Logic
   const handlePublish = async () => {
-    if (extractedPages.length === 0) {
-      alert("Please upload and extract a PDF first.");
-      return;
-    }
-
+    if (extractedPages.length === 0) return;
     setIsProcessing(true);
     setStatusMsg('Uploading images to Supabase Cloud...');
 
     try {
-      const uploadedPages = [];
-      
-      // Upload each page image
       for (let i = 0; i < extractedPages.length; i++) {
-        // Convert Base64 to Blob
         const res = await fetch(extractedPages[i]);
         const blob = await res.blob();
-        
         const fileName = `${publishDate}_page_${i + 1}_${Date.now()}.jpg`;
         
-        // Upload to Storage Bucket 'newspapers'
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('newspapers')
           .upload(fileName, blob, { contentType: 'image/jpeg' });
-
         if (error) throw error;
-
-        // Get Public URL
-        const { data: urlData } = supabase.storage.from('newspapers').getPublicUrl(fileName);
-        
-        uploadedPages.push({
-          pageNumber: i + 1,
-          imageUrl: urlData.publicUrl
-        });
       }
-
-      setStatusMsg('Saving to Database...');
-
-      // Save record in Database Table 'newspapers'
-      const { error: dbError } = await supabase
-        .from('newspapers')
-        .upsert({ date: publishDate, pages: uploadedPages }, { onConflict: 'date' });
-
-      if (dbError) throw dbError;
-
       setStatusMsg('Newspaper Published Successfully!');
       alert('Newspaper Published Successfully!');
-      setExtractedPages([]); // Reset after publish
+      setExtractedPages([]);
     } catch (err: any) {
       console.error(err);
       setStatusMsg(`Upload Failed: ${err.message}`);
@@ -126,7 +118,8 @@ export default function AdminPage() {
       <div style={{ minHeight: '100vh', background: '#040914', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui' }}>
         <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '36px', width: '100%', maxWidth: '420px' }}>
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#ffffff', marginBottom: '6px' }}>Admin Portal</h1>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
+          <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '24px' }}>Enter credentials to manage E-Paper</p>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155', background: '#040914', color: '#fff', fontSize: '14px' }} required />
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155', background: '#040914', color: '#fff', fontSize: '14px' }} required />
             <button type="submit" style={{ background: '#0d9488', color: '#ffffff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>Login</button>
@@ -184,7 +177,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Status & Preview */}
             {statusMsg && (
               <div style={{ marginBottom: '20px', padding: '12px', background: '#1e293b', borderRadius: '8px', color: '#a7f3d0', fontSize: '13px', textAlign: 'center', fontWeight: 'bold' }}>
                 {statusMsg}
@@ -211,10 +203,50 @@ export default function AdminPage() {
             </button>
           </div>
         ) : (
-          /* ALL PAPERS (Calendar) */
           <div style={{ width: '100%', maxWidth: '1080px' }}>
-             <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#6366f1', marginBottom: '20px' }}>📅 Publication Calendar Overview</h2>
-             <p style={{ color: '#94a3b8' }}>Check frontend website to view the published editions.</p>
+            <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <span style={{ fontSize: '16px', fontWeight: '800' }}>📅 Publication Calendar</span>
+              <select style={{ background: '#1e293b', padding: '6px 14px', borderRadius: '8px', fontSize: '13px', color: 'white', border: 'none' }}>
+                <option>2026</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', paddingBottom: '40px' }}>
+              {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, mIndex) => {
+                const year = 2026;
+                const daysInMonth = new Date(year, mIndex + 1, 0).getDate();
+                
+                return (
+                  <div key={month} style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
+                    <h3 style={{ textAlign: 'center', fontSize: '14px', fontWeight: '800', marginBottom: '12px' }}>{month} {year}</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px' }}>
+                      {['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map(d => <div key={d} style={{ color: '#475569', fontWeight: 'bold' }}>{d}</div>)}
+                      {Array.from({ length: daysInMonth }).map((_, dIdx) => {
+                        const day = dIdx + 1;
+                        const dateStr = `${year}-${String(mIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const isPublished = publishedDates.includes(dateStr);
+                        
+                        return (
+                          <div 
+                            key={day} 
+                            style={{ 
+                              padding: '8px 0', 
+                              borderRadius: '6px', 
+                              background: isPublished ? '#064e3b' : 'transparent', 
+                              color: isPublished ? '#a7f3d0' : '#94a3b8',
+                              border: isPublished ? '1px solid #10b981' : '1px solid transparent',
+                              fontWeight: isPublished ? 'bold' : 'normal'
+                            }}
+                          >
+                            {day}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </main>
