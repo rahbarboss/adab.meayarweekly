@@ -7,55 +7,82 @@
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #0b1120;
+  background-color: #080f1d;
   color: #f8fafc;
   overflow: hidden;
   height: 100vh;
   width: 100vw;
 }
 
-/* Header */
+/* Header Container */
 .top-nav {
-  height: 60px;
-  background: #0f172a;
+  height: 64px;
+  background: #0b1329;
   border-bottom: 1px solid #1e293b;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  padding: 0 16px;
-  gap: 12px;
   position: relative;
   z-index: 50;
+  padding: 0 16px;
 }
 
-.date-btn, .share-btn {
+/* Controls centered exactly above the newspaper */
+.nav-center-group {
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Date Pill */
+.date-btn {
   background: #0d9488;
   color: #ffffff;
   border: none;
-  padding: 6px 14px;
+  padding: 8px 18px;
   border-radius: 9999px;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+}
+
+/* Share Pill */
+.share-btn {
+  background: #0d9488;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
 }
 
 .share-menu {
   position: absolute;
-  top: 55px;
-  right: 120px;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
   background: #1e293b;
   border: 1px solid #334155;
   border-radius: 12px;
-  padding: 6px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-  min-width: 150px;
+  min-width: 160px;
   z-index: 100;
 }
 
@@ -68,6 +95,7 @@ body {
   border-radius: 8px;
   font-size: 13px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .share-menu button:hover {
@@ -79,10 +107,11 @@ body {
 .page-pill-container {
   background: #ffffff;
   border-radius: 9999px;
-  padding: 2px 6px;
-  display: flex;
+  padding: 4px 8px;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .nav-arrow {
@@ -90,24 +119,25 @@ body {
   border: none;
   color: #0d9488;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 900;
   cursor: pointer;
   padding: 0 6px;
 }
 
 .page-num-circle {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: transparent;
   color: #0f172a;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
 }
 
 .page-num-circle.active {
@@ -115,119 +145,157 @@ body {
   color: #ffffff;
 }
 
-/* Viewport Layout */
+/* Main Viewport */
 .main-viewport {
   display: flex;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 64px);
   width: 100%;
   overflow: hidden;
+  position: relative;
 }
 
-/* Left Sidebar Thumbnails (A4 ratio) */
+/* Left Sidebar Thumbnails */
 .left-sidebar {
-  width: 170px;
-  background: #090e17;
+  width: 180px;
+  background: #060b14;
   border-right: 1px solid #1e293b;
   overflow-y: auto;
-  padding: 12px 10px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   flex-shrink: 0;
 }
 
 .thumb-wrapper {
-  background: #111827;
+  background: #0f172a;
   border: 2px solid #1e293b;
-  border-radius: 8px;
-  padding: 4px;
+  border-radius: 10px;
+  padding: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .thumb-wrapper.active {
   border-color: #0d9488;
-  box-shadow: 0 0 10px rgba(13, 148, 136, 0.5);
+  box-shadow: 0 0 14px rgba(13, 148, 136, 0.4);
 }
 
 .thumb-wrapper img {
   width: 100%;
   aspect-ratio: 1 / 1.414;
-  object-fit: fill;
+  object-fit: cover;
   display: block;
   border-radius: 4px;
-  background: #ffffff;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .thumb-text {
   text-align: center;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: #94a3b8;
-  margin-top: 5px;
+  margin-top: 6px;
 }
 
 .thumb-wrapper.active .thumb-text {
   color: #2dd4bf;
 }
 
-/* Center Viewer (Main newspaper display) */
+/* Center Viewer (Super HD rendering) */
 .viewer-area {
   flex: 1;
-  background: #0b1120;
+  background: #080f1d;
   overflow: auto;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 16px;
-  -webkit-overflow-scrolling: touch;
+  padding: 24px;
+  position: relative;
 }
 
 .paper-container {
-  width: 100%;
-  max-width: 920px;
   display: flex;
   justify-content: center;
+  transition: transform 0.2s ease-out;
+  transform-origin: top center;
 }
 
 .paper-display {
-  width: 100%;
+  width: 920px;
+  max-width: 95vw;
   height: auto;
-  aspect-ratio: 1 / 1.414;
-  object-fit: contain;
-  background: #ffffff;
   border-radius: 4px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+  background: #ffffff;
+  display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
-/* Mobile & Tablet Responsiveness (9:16 layout) */
+/* Floating Zoom Bar (Top Right) */
+.zoom-controls {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 40;
+}
+
+.zoom-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: all 0.2s;
+}
+
+.zoom-btn:hover {
+  background: #0d9488;
+  border-color: #0d9488;
+}
+
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .top-nav {
-    height: 52px;
-    padding: 0 10px;
-    gap: 8px;
+    height: 56px;
+    padding: 0 8px;
   }
-  
+
+  .nav-center-group {
+    gap: 6px;
+  }
+
   .date-btn, .share-btn {
-    padding: 5px 10px;
+    padding: 6px 10px;
     font-size: 11px;
   }
 
   .main-viewport {
     flex-direction: column-reverse;
-    height: calc(100vh - 52px);
+    height: calc(100vh - 56px);
   }
 
-  /* Bottom horizontal thumbnail strip on phone */
   .left-sidebar {
     width: 100%;
-    height: 100px;
+    height: 95px;
     border-right: none;
     border-top: 1px solid #1e293b;
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 8px 10px;
+    padding: 8px;
     gap: 10px;
   }
 
@@ -243,19 +311,15 @@ body {
   }
 
   .viewer-area {
-    padding: 8px;
-    align-items: center;
-  }
-
-  .paper-container {
-    max-width: 100%;
-    height: 100%;
+    padding: 10px;
   }
 
   .paper-display {
-    max-height: 100%;
-    width: auto;
-    aspect-ratio: 9 / 16;
-    object-fit: contain;
+    width: 100%;
+  }
+
+  .zoom-controls {
+    top: 12px;
+    right: 12px;
   }
 }
