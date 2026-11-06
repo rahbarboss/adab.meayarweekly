@@ -9,41 +9,65 @@ export default function Home() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   
-  // By default, current date is set to today
-  const [currentDate, setCurrentDate] = useState(() => {
-    const d = new Date();
-    return d.toISOString().split('T')[0];
-  });
-
+  // Start with empty date, will automatically fetch latest from Supabase
+  const [currentDate, setCurrentDate] = useState('');
   const [pages, setPages] = useState<Array<{ pageNo: number; image: string }>>([]);
 
-  // Fetch paper specific to the selected date from Supabase
+  // 1. Initial Load: Fetch the LATEST uploaded paper automatically
   useEffect(() => {
-    async function fetchPaperForDate() {
+    async function fetchLatestPaper() {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('newspapers')
           .select('*')
-          .eq('date', currentDate)
+          .order('date', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (data && data.pages && data.pages.length > 0) {
+          setCurrentDate(data.date);
           const mapped = data.pages.map((p: any, idx: number) => ({
             pageNo: p.pageNumber || idx + 1,
             image: p.imageUrl,
           }));
           setPages(mapped);
           setCurrentPage(1);
-        } else {
-          setPages([]); // No paper on this date
         }
       } catch (err) {}
       
       setTimeout(() => setIsLoading(false), 800);
     }
-    fetchPaperForDate();
-  }, [currentDate]);
+    fetchLatestPaper();
+  }, []);
+
+  // 2. Fetch specific paper when user selects a date from calendar
+  const handleDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = e.target.value;
+    setCurrentDate(selectedDate);
+    setIsLoading(true);
+    
+    try {
+      const { data } = await supabase
+        .from('newspapers')
+        .select('*')
+        .eq('date', selectedDate)
+        .maybeSingle();
+
+      if (data && data.pages && data.pages.length > 0) {
+        const mapped = data.pages.map((p: any, idx: number) => ({
+          pageNo: p.pageNumber || idx + 1,
+          image: p.imageUrl,
+        }));
+        setPages(mapped);
+        setCurrentPage(1);
+      } else {
+        setPages([]); // Show empty state if no paper is found on this date
+      }
+    } catch (err) {}
+    
+    setTimeout(() => setIsLoading(false), 800);
+  };
 
   const handleShare = (type: string) => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -68,7 +92,7 @@ export default function Home() {
       <header className="top-nav">
         <div className="nav-center-group">
           
-          {/* Fully Clickable Date Selector (Invisible input over button) */}
+          {/* Fully Clickable Date Selector */}
           <div style={{ position: 'relative', display: 'inline-flex' }}>
             <button className="date-btn" style={{ position: 'relative', zIndex: 1 }}>
               <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -77,7 +101,7 @@ export default function Home() {
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>{currentDate}</span>
+              <span>{currentDate || 'Loading...'}</span>
               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M6 9l6 6 6-6"></path>
               </svg>
@@ -85,7 +109,7 @@ export default function Home() {
             <input 
               type="date" 
               value={currentDate}
-              onChange={(e) => setCurrentDate(e.target.value)}
+              onChange={handleDateChange}
               style={{
                 position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
                 opacity: 0, cursor: 'pointer', zIndex: 10
@@ -170,7 +194,7 @@ export default function Home() {
             </main>
           </>
         ) : (
-          /* Empty State if no paper exists */
+          /* Empty State if no paper exists on selected date */
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: '#64748b', background: '#080f1d' }}>
             <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24" style={{ marginBottom: '16px' }}>
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
