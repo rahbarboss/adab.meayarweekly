@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 
 export default function AdminPage() {
@@ -7,8 +6,11 @@ export default function AdminPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'upload' | 'calendar'>('upload');
-  const [publishDate, setPublishDate] = useState('2026-09-20');
-  const [pages, setPages] = useState<string[]>(['']);
+  
+  const [publishDate, setPublishDate] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  });
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,28 +50,38 @@ export default function AdminPage() {
       {/* Main Area Scroll Fix */}
       <main style={{ padding: '36px', overflowY: 'auto', flex: 1, display: 'flex', justifyContent: 'center' }}>
         {activeTab === 'upload' ? (
-          <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '680px' }}>
+          <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '680px', alignSelf: 'flex-start' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#10b981', marginBottom: '20px' }}>📑 Upload E-Paper Edition</h2>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Publish Date</label>
-              <div style={{ background: '#040914', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                
-                {/* Working Date Picker inside Admin */}
+              
+              {/* Working Date Picker */}
+              <div style={{ background: '#040914', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 16px', position: 'relative' }}>
                 <input 
                   type="date" 
                   value={publishDate}
                   onChange={(e) => setPublishDate(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 'bold', outline: 'none', cursor: 'pointer' }}
+                  style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 'bold', outline: 'none', cursor: 'pointer', zIndex: 10, position: 'relative' }}
                 />
-
               </div>
             </div>
 
-            <div style={{ border: '2px dashed #0d9488', borderRadius: '14px', padding: '36px 20px', textAlign: 'center', background: 'rgba(13, 148, 136, 0.03)', marginBottom: '24px' }}>
+            {/* Fixed Upload Click Area */}
+            <div style={{ border: '2px dashed #0d9488', borderRadius: '14px', padding: '36px 20px', textAlign: 'center', background: 'rgba(13, 148, 136, 0.03)', marginBottom: '24px', position: 'relative' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '4px' }}>Upload Full PDF Document</h3>
               <p style={{ color: '#64748b', fontSize: '12px', marginBottom: '16px' }}>Upload a single PDF to auto-extract pages.</p>
-              <button type="button" style={{ background: '#10b981', color: '#ffffff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>📑 Select PDF File</button>
+              
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <input 
+                  type="file" 
+                  accept="application/pdf"
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                />
+                <button type="button" style={{ background: '#10b981', color: '#ffffff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: '700', pointerEvents: 'none' }}>
+                  📑 Select PDF File
+                </button>
+              </div>
             </div>
 
             <button type="button" onClick={() => alert('Newspaper Published!')} style={{ width: '100%', background: '#10b981', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '10px', fontSize: '15px', fontWeight: '800', cursor: 'pointer' }}>🚀 Publish Newspaper</button>
@@ -81,14 +93,14 @@ export default function AdminPage() {
               <span style={{ background: '#1e293b', padding: '6px 14px', borderRadius: '8px', fontSize: '13px' }}>2026 ▾</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', paddingBottom: '40px' }}>
               {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
                 <div key={month} style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
                   <h3 style={{ textAlign: 'center', fontSize: '14px', fontWeight: '800', marginBottom: '12px' }}>{month} 2026</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px' }}>
                     {['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map(d => <div key={d} style={{ color: '#475569' }}>{d}</div>)}
                     {Array.from({ length: 28 }).map((_, dIdx) => (
-                      <div key={dIdx + 1} style={{ padding: '8px 0', borderRadius: '6px', background: (month === 'September' && (dIdx + 1 === 20)) ? '#064e3b' : 'transparent', color: (month === 'September' && (dIdx + 1 === 20)) ? '#a7f3d0' : '#94a3b8' }}>
+                      <div key={dIdx + 1} style={{ padding: '8px 0', borderRadius: '6px', background: 'transparent', color: '#94a3b8' }}>
                         {dIdx + 1}
                       </div>
                     ))}
