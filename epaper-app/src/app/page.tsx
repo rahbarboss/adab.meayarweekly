@@ -9,71 +9,75 @@ export default function Home() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Date state khali rakhi hai taaki load hote hi bucket se sabse latest date khud nikal le
   const [currentDate, setCurrentDate] = useState('');
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [pages, setPages] = useState<Array<{ pageNo: number; image: string }>>([]);
 
-  // Direct Supabase STORAGE BUCKET se fetch karne ka logic
+  // Fetch all available dates from Supabase on load
   useEffect(() => {
-    async function fetchPapersFromStorage() {
+    async function loadInitialData() {
       setIsLoading(true);
       try {
-        // 'newspapers' bucket se saari files ki list nikalna
-        const { data: files, error } = await supabase.storage.from('newspapers').list('', {
-          limit: 1000,
-          sortBy: { column: 'name', order: 'desc' }
-        });
+        // Sirf wahi dates fetch karo jo database me hain
+        const { data: dateData } = await supabase
+          .from('newspapers')
+          .select('date')
+          .order('date', { ascending: false });
 
-        if (files && files.length > 0) {
-          // Sirf valid pages filter karna
-          const validFiles = files.filter(f => f.name.includes('_page_'));
+        if (dateData && dateData.length > 0) {
+          const uniqueDates = Array.from(new Set(dateData.map(d => d.date)));
+          setAvailableDates(uniqueDates);
+          
+          const latestDate = uniqueDates[0];
+          setCurrentDate(latestDate);
+          
+          // Latest date ka paper fetch karo
+          const { data: paperData } = await supabase
+            .from('newspapers')
+            .select('*')
+            .eq('date', latestDate)
+            .maybeSingle();
 
-          if (validFiles.length > 0) {
-            let targetDate = currentDate;
-
-            // Agar koi date select nahi hai, to files me se sabse Latest Date nikalna
-            if (!targetDate) {
-              const dates = validFiles.map(f => f.name.substring(0, 10)); // "2026-09-23"
-              const uniqueDates = Array.from(new Set(dates)).sort().reverse();
-              targetDate = uniqueDates[0];
-              setCurrentDate(targetDate);
-            }
-
-            // Target date wali files filter karna
-            const dateFiles = validFiles.filter(f => f.name.startsWith(targetDate));
-
-            if (dateFiles.length > 0) {
-              const mappedPages = dateFiles.map(f => {
-                // File name se Page Number nikalna
-                const pageMatch = f.name.match(/_page_(\d+)/);
-                const pageNo = pageMatch ? parseInt(pageMatch[1], 10) : 1;
-                
-                // Supabase se image ka public URL nikalna
-                const { data: publicUrlData } = supabase.storage.from('newspapers').getPublicUrl(f.name);
-                
-                return {
-                  pageNo,
-                  image: publicUrlData.publicUrl
-                };
-              });
-
-              // Page 1, Page 2 sequence me sort karna
-              mappedPages.sort((a, b) => a.pageNo - b.pageNo);
-              setPages(mappedPages);
-              setCurrentPage(1);
-            } else {
-              setPages([]); // Agar us date par koi paper na ho
-            }
+          if (paperData && paperData.pages) {
+            const mapped = paperData.pages.map((p: any, idx: number) => ({
+              pageNo: p.pageNumber || idx + 1,
+              image: p.imageUrl,
+            }));
+            setPages(mapped);
           }
         }
-      } catch (err) {
-        console.error("Storage fetch error:", err);
-      }
+      } catch (err) {}
       setTimeout(() => setIsLoading(false), 800);
     }
+    loadInitialData();
+  }, []);
+
+  // Jab user Date change kare (Dropdown se)
+  const handleDateChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedDate = e.target.value;
+    setCurrentDate(selectedDate);
+    setIsLoading(true);
     
-    fetchPapersFromStorage();
-  }, [currentDate]);
+    try {
+      const { data } = await supabase
+        .from('newspapers')
+        .select('*')
+        .eq('date', selectedDate)
+        .maybeSingle();
+
+      if (data && data.pages) {
+        const mapped = data.pages.map((p: any, idx: number) => ({
+          pageNo: p.pageNumber || idx + 1,
+          image: p.imageUrl,
+        }));
+        setPages(mapped);
+        setCurrentPage(1);
+      } else {
+        setPages([]); 
+      }
+    } catch (err) {}
+    setTimeout(() => setIsLoading(false), 800);
+  };
 
   const handleShare = (type: string) => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -87,6 +91,7 @@ export default function Home() {
       navigator.clipboard.writeText(url);
       alert('Link Copied!');
     }
+    setShowShare(false);
   };
 
   const activeImage = pages.find((p) => p.pageNo === currentPage)?.image || '';
@@ -94,42 +99,40 @@ export default function Home() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Top Header */}
+      {/* Header */}
       <header className="top-nav">
         <div className="nav-center-group">
           
-          {/* Working Date Selector */}
+          {/* Dynamic Dropdown showing ONLY uploaded dates */}
           <div style={{ position: 'relative', display: 'inline-flex' }}>
-            <button className="date-btn" style={{ position: 'relative', zIndex: 1 }}>
+            <button className="date-btn" style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
               <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>{currentDate || 'Loading...'}</span>
+              <span>{currentDate || 'No Papers'}</span>
               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M6 9l6 6 6-6"></path>
               </svg>
             </button>
-            <input 
-              type="date" 
+            <select 
               value={currentDate}
-              onChange={(e) => setCurrentDate(e.target.value)}
+              onChange={handleDateChange}
               style={{
                 position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
                 opacity: 0, cursor: 'pointer', zIndex: 10
               }}
-            />
+            >
+              {availableDates.map(date => (
+                <option key={date} value={date}>{date}</option>
+              ))}
+            </select>
           </div>
 
           <button className="share-btn" onClick={() => setShowShare(true)}>
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
             </svg>
             <span>Share</span>
           </button>
@@ -201,15 +204,7 @@ export default function Home() {
           </>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: '#64748b', background: '#080f1d' }}>
-            <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24" style={{ marginBottom: '16px' }}>
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-            <h2 style={{ fontSize: '20px', fontWeight: '700' }}>No E-Paper Published on {currentDate}</h2>
-            <p style={{ marginTop: '8px', fontSize: '14px' }}>Please select another date from the top menu.</p>
+            <h2 style={{ fontSize: '20px', fontWeight: '700' }}>No Papers Found</h2>
           </div>
         )}
       </div>
