@@ -243,11 +243,95 @@ body {
 .copy-link-box input { background: transparent; border: none; font-size: 12px; width: 100%; outline: none; }
 .copy-link-box button { background: #1e293b; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
 
-/* FIX: Make native date picker clickable over styled buttons */
 input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   width: 100%; height: 100%;
   color: transparent; background: transparent;
   cursor: pointer; z-index: 20;
+}
+
+/* ========================================= */
+/* MOBILE PHONE RESPONSIVENESS FIX           */
+/* ========================================= */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 0 4px;
+    overflow-x: auto;
+  }
+  
+  .nav-center-group {
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .date-btn, .share-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .page-num-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  /* Main screen ko upar niche (column) me divide karna */
+  .main-viewport {
+    flex-direction: column-reverse;
+  }
+  
+  /* Sidebar ko bottom me horizontal scroll bar banana */
+  .left-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 120px;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid #1e293b;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px;
+    gap: 12px;
+  }
+  
+  .thumb-wrapper {
+    width: 65px;
+    flex-shrink: 0;
+    padding: 4px;
+  }
+  
+  .thumb-text {
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  
+  /* Main paper ko phone screen ke hisaab se full width karna */
+  .viewer-area {
+    padding: 12px 8px;
+    align-items: center;
+  }
+  
+  .paper-display {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+
+  /* Zoom controls ko thoda chhota aur adjust karna phone ke liye */
+  .zoom-controls {
+    top: 12px;
+    right: 12px;
+  }
+  
+  .zoom-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .zoom-btn svg {
+    width: 14px;
+    height: 14px;
+  }
 }
