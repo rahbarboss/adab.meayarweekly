@@ -25,6 +25,9 @@ export default function AdminPage() {
   
   // Storage for highlighted calendar dates
   const [publishedDates, setPublishedDates] = useState<string[]>([]);
+  
+  // Calendar Year State (2026 to 2030)
+  const [selectedYear, setSelectedYear] = useState(2026);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,21 +209,36 @@ export default function AdminPage() {
           <div style={{ width: '100%', maxWidth: '1080px' }}>
             <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
               <span style={{ fontSize: '16px', fontWeight: '800' }}>📅 Publication Calendar</span>
-              <select style={{ background: '#1e293b', padding: '6px 14px', borderRadius: '8px', fontSize: '13px', color: 'white', border: 'none' }}>
-                <option>2026</option>
+              
+              {/* Dynamic Year Selector (2026 to 2030) */}
+              <select 
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                style={{ background: '#1e293b', padding: '6px 14px', borderRadius: '8px', fontSize: '13px', color: 'white', border: 'none', cursor: 'pointer' }}
+              >
+                {[2026, 2027, 2028, 2029, 2030].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
               </select>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', paddingBottom: '40px' }}>
               {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, mIndex) => {
-                const year = 2026;
+                const year = selectedYear; // Automatically use the selected year
                 const daysInMonth = new Date(year, mIndex + 1, 0).getDate();
+                const firstDayOfMonth = new Date(year, mIndex, 1).getDay();
                 
                 return (
                   <div key={month} style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px' }}>
                     <h3 style={{ textAlign: 'center', fontSize: '14px', fontWeight: '800', marginBottom: '12px' }}>{month} {year}</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px' }}>
                       {['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map(d => <div key={d} style={{ color: '#475569', fontWeight: 'bold' }}>{d}</div>)}
+                      
+                      {/* Empty slots for correct day alignment */}
+                      {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                        <div key={`empty-${i}`}></div>
+                      ))}
+
                       {Array.from({ length: daysInMonth }).map((_, dIdx) => {
                         const day = dIdx + 1;
                         const dateStr = `${year}-${String(mIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
