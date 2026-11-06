@@ -22,7 +22,7 @@ body {
   display: flex;
   align-items: center;
   position: relative;
-  z-index: 1000; /* Header top z-index */
+  z-index: 1000;
   padding: 0 16px;
 }
 
@@ -244,13 +244,47 @@ body {
 .copy-link-box input { background: transparent; border: none; font-size: 12px; width: 100%; outline: none; }
 .copy-link-box button { background: #1e293b; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  color: transparent; background: transparent;
+  cursor: pointer; z-index: 20;
+}
+
+/* ========================================= */
+/* CUSTOM CALENDAR DROPDOWN STYLING          */
+/* ========================================= */
+.calendar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  padding: 12px;
+  z-index: 99999;
+  width: 280px;
+  color: black;
+}
+
+.cal-day {
+  padding: 8px;
+  margin: 2px;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
 /* ========================================= */
 /* MOBILE PHONE RESPONSIVENESS FIX           */
 /* ========================================= */
 @media (max-width: 768px) {
   .top-nav {
     padding: 0 4px;
-    overflow: visible; /* FIXED: Removed overflow-x: auto so calendar dropdown doesn't hide */
+    overflow: visible; 
   }
   
   .nav-center-group {
@@ -274,7 +308,6 @@ body {
     flex-direction: column-reverse;
   }
   
-  /* Sidebar ko thoda upar shift kiya gaya hai */
   .left-sidebar {
     width: 100%;
     height: auto;
@@ -284,7 +317,7 @@ body {
     border-top: 1px solid #1e293b;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 12px 10px 24px 10px; /* FIXED: Bottom padding badha di taaki pages upar aa jayein */
+    padding: 12px 10px 24px 10px; 
     gap: 12px;
   }
   
@@ -323,5 +356,18 @@ body {
   .zoom-btn svg {
     width: 14px;
     height: 14px;
+  }
+
+  /* Fixed Calendar for Mobile */
+  .calendar-dropdown {
+    left: 0; /* Align perfectly to the left of the button */
+    transform: none; /* Remove centering shift */
+    width: 250px; /* Thoda chhota size */
+    padding: 10px;
+  }
+  .cal-day {
+    padding: 6px; /* Chhota padding */
+    margin: 1px;
+    font-size: 13px;
   }
 }

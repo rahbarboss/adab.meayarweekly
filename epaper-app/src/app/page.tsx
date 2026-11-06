@@ -109,7 +109,7 @@ export default function Home() {
     const days = [];
 
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} style={{ padding: '8px', margin: '2px' }}></div>);
+      days.push(<div key={`empty-${i}`} className="cal-day" style={{ background: 'transparent', border: 'none' }}></div>);
     }
 
     for (let i = 1; i <= daysInMonth; i++) {
@@ -120,6 +120,7 @@ export default function Home() {
       days.push(
         <div 
           key={dateStr}
+          className="cal-day"
           onClick={() => {
             if (isAvailable) {
               setCurrentDate(dateStr);
@@ -127,10 +128,6 @@ export default function Home() {
             }
           }}
           style={{
-            padding: '8px',
-            margin: '2px',
-            textAlign: 'center',
-            borderRadius: '6px',
             cursor: isAvailable ? 'pointer' : 'not-allowed',
             background: isSelected ? '#0d9488' : (isAvailable ? '#f1f5f9' : '#f8fafc'),
             color: isSelected ? 'white' : (isAvailable ? '#0f172a' : '#cbd5e1'),
@@ -166,20 +163,7 @@ export default function Home() {
             </button>
             
             {showCalendar && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)', /* Center it so it doesn't go off screen */
-                marginTop: '8px',
-                background: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-                padding: '12px',
-                zIndex: 99999, /* High z-index to stay above everything */
-                width: '280px',
-                color: 'black'
-              }}>
+              <div className="calendar-dropdown">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#0d9488', padding: '8px', borderRadius: '6px', color: 'white' }}>
                   <button onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}>&lt;</button>
                   <span style={{ fontWeight: 'bold' }}>{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
@@ -190,7 +174,7 @@ export default function Home() {
                   <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', fontSize: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
                   {renderCalendar()}
                 </div>
               </div>
