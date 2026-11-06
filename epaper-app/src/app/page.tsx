@@ -13,12 +13,10 @@ export default function Home() {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [pages, setPages] = useState<Array<{ pageNo: number; image: string }>>([]);
   
-  // Custom Calendar State
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Initial load
   useEffect(() => {
     async function fetchPapersFromStorage() {
       setIsLoading(true);
@@ -68,7 +66,6 @@ export default function Home() {
     fetchPapersFromStorage();
   }, [currentDate]);
 
-  // Close calendar on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
@@ -94,7 +91,6 @@ export default function Home() {
     setShowShare(false);
   };
 
-  // Calendar Helper Functions
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
@@ -112,12 +108,10 @@ export default function Home() {
     const firstDay = getFirstDayOfMonth(year, month);
     const days = [];
 
-    // Empty cells for days before the 1st
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} style={{ padding: '8px', margin: '2px' }}></div>);
     }
 
-    // Days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const isAvailable = availableDates.includes(dateStr);
@@ -152,24 +146,18 @@ export default function Home() {
   };
 
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
   const activeImage = pages.find((p) => p.pageNo === currentPage)?.image || '';
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Top Header */}
       <header className="top-nav">
         <div className="nav-center-group">
           
-          {/* Custom Date Selector */}
           <div style={{ position: 'relative', display: 'inline-flex' }} ref={calendarRef}>
             <button className="date-btn" onClick={() => setShowCalendar(!showCalendar)} style={{ position: 'relative', zIndex: 1 }}>
               <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
               <span>{currentDate || 'Loading...'}</span>
               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -177,18 +165,18 @@ export default function Home() {
               </svg>
             </button>
             
-            {/* Custom Calendar Dropdown */}
             {showCalendar && (
               <div style={{
                 position: 'absolute',
                 top: '100%',
-                left: '0',
+                left: '50%',
+                transform: 'translateX(-50%)', /* Center it so it doesn't go off screen */
                 marginTop: '8px',
                 background: 'white',
                 borderRadius: '8px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
                 padding: '12px',
-                zIndex: 100,
+                zIndex: 99999, /* High z-index to stay above everything */
                 width: '280px',
                 color: 'black'
               }}>
@@ -211,11 +199,8 @@ export default function Home() {
 
           <button className="share-btn" onClick={() => setShowShare(true)}>
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
             </svg>
             <span>Share</span>
           </button>
@@ -236,7 +221,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Viewport */}
       <div className="main-viewport">
         {isLoading ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080f1d' }}>

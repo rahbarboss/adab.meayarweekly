@@ -10,7 +10,7 @@ body {
   background-color: #080f1d;
   color: #f8fafc;
   overflow: hidden;
-  height: 100vh;
+  height: 100dvh; /* Mobile browser bottom bar support */
   width: 100vw;
 }
 
@@ -22,7 +22,7 @@ body {
   display: flex;
   align-items: center;
   position: relative;
-  z-index: 50;
+  z-index: 1000; /* Header top z-index */
   padding: 0 16px;
 }
 
@@ -95,10 +95,11 @@ body {
 /* Main Layout */
 .main-viewport {
   display: flex;
-  height: calc(100vh - 64px);
+  height: calc(100dvh - 64px);
   width: 100%;
   overflow: hidden;
   position: relative;
+  z-index: 10;
 }
 
 .left-sidebar {
@@ -211,7 +212,7 @@ body {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
-  z-index: 9999;
+  z-index: 99999;
 }
 .share-modal-box {
   background: #ffffff; border-radius: 20px; width: 90%; max-width: 360px;
@@ -243,21 +244,13 @@ body {
 .copy-link-box input { background: transparent; border: none; font-size: 12px; width: 100%; outline: none; }
 .copy-link-box button { background: #1e293b; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100%; height: 100%;
-  color: transparent; background: transparent;
-  cursor: pointer; z-index: 20;
-}
-
 /* ========================================= */
 /* MOBILE PHONE RESPONSIVENESS FIX           */
 /* ========================================= */
 @media (max-width: 768px) {
   .top-nav {
     padding: 0 4px;
-    overflow-x: auto;
+    overflow: visible; /* FIXED: Removed overflow-x: auto so calendar dropdown doesn't hide */
   }
   
   .nav-center-group {
@@ -277,22 +270,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 11px;
   }
 
-  /* Main screen ko upar niche (column) me divide karna */
   .main-viewport {
     flex-direction: column-reverse;
   }
   
-  /* Sidebar ko bottom me horizontal scroll bar banana */
+  /* Sidebar ko thoda upar shift kiya gaya hai */
   .left-sidebar {
     width: 100%;
     height: auto;
-    max-height: 120px;
+    max-height: 150px;
     flex-direction: row;
     border-right: none;
     border-top: 1px solid #1e293b;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 10px;
+    padding: 12px 10px 24px 10px; /* FIXED: Bottom padding badha di taaki pages upar aa jayein */
     gap: 12px;
   }
   
@@ -307,7 +299,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-top: 4px;
   }
   
-  /* Main paper ko phone screen ke hisaab se full width karna */
   .viewer-area {
     padding: 12px 8px;
     align-items: center;
@@ -319,7 +310,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     max-width: 100%;
   }
 
-  /* Zoom controls ko thoda chhota aur adjust karna phone ke liye */
   .zoom-controls {
     top: 12px;
     right: 12px;
