@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/data';
 
 export default function Home() {
@@ -12,72 +12,72 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState('');
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [pages, setPages] = useState<Array<{ pageNo: number; image: string }>>([]);
+  
+  // Custom Calendar State
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Fetch all available dates from Supabase on load
+  // Initial load
   useEffect(() => {
-    async function loadInitialData() {
+    async function fetchPapersFromStorage() {
       setIsLoading(true);
       try {
-        // Sirf wahi dates fetch karo jo database me hain
-        const { data: dateData } = await supabase
-          .from('newspapers')
-          .select('date')
-          .order('date', { ascending: false });
+        const { data: files, error } = await supabase.storage.from('newspapers').list('', {
+          limit: 1000,
+          sortBy: { column: 'name', order: 'desc' }
+        });
 
-        if (dateData && dateData.length > 0) {
-          const uniqueDates = Array.from(new Set(dateData.map(d => d.date)));
-          setAvailableDates(uniqueDates);
-          
-          const latestDate = uniqueDates[0];
-          setCurrentDate(latestDate);
-          
-          // Latest date ka paper fetch karo
-          const { data: paperData } = await supabase
-            .from('newspapers')
-            .select('*')
-            .eq('date', latestDate)
-            .maybeSingle();
+        if (files && files.length > 0) {
+          const validFiles = files.filter(f => f.name.includes('_page_'));
 
-          if (paperData && paperData.pages) {
-            const mapped = paperData.pages.map((p: any, idx: number) => ({
-              pageNo: p.pageNumber || idx + 1,
-              image: p.imageUrl,
-            }));
-            setPages(mapped);
+          if (validFiles.length > 0) {
+            const dates = validFiles.map(f => f.name.substring(0, 10)); 
+            const uniqueDates = Array.from(new Set(dates)).sort().reverse();
+            setAvailableDates(uniqueDates);
+
+            let targetDate = currentDate;
+            if (!targetDate) {
+              targetDate = uniqueDates[0];
+              setCurrentDate(targetDate);
+              setCalendarMonth(new Date(targetDate));
+            }
+
+            const dateFiles = validFiles.filter(f => f.name.startsWith(targetDate));
+
+            if (dateFiles.length > 0) {
+              const mappedPages = dateFiles.map(f => {
+                const pageMatch = f.name.match(/_page_(\d+)/);
+                const pageNo = pageMatch ? parseInt(pageMatch[1], 10) : 1;
+                const { data: publicUrlData } = supabase.storage.from('newspapers').getPublicUrl(f.name);
+                return { pageNo, image: publicUrlData.publicUrl };
+              });
+              mappedPages.sort((a, b) => a.pageNo - b.pageNo);
+              setPages(mappedPages);
+              setCurrentPage(1);
+            } else {
+              setPages([]);
+            }
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error("Storage fetch error:", err);
+      }
       setTimeout(() => setIsLoading(false), 800);
     }
-    loadInitialData();
-  }, []);
+    fetchPapersFromStorage();
+  }, [currentDate]);
 
-  // Jab user Date change kare (Dropdown se)
-  const handleDateChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedDate = e.target.value;
-    setCurrentDate(selectedDate);
-    setIsLoading(true);
-    
-    try {
-      const { data } = await supabase
-        .from('newspapers')
-        .select('*')
-        .eq('date', selectedDate)
-        .maybeSingle();
-
-      if (data && data.pages) {
-        const mapped = data.pages.map((p: any, idx: number) => ({
-          pageNo: p.pageNumber || idx + 1,
-          image: p.imageUrl,
-        }));
-        setPages(mapped);
-        setCurrentPage(1);
-      } else {
-        setPages([]); 
+  // Close calendar on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setShowCalendar(false);
       }
-    } catch (err) {}
-    setTimeout(() => setIsLoading(false), 800);
-  };
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleShare = (type: string) => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -94,45 +94,128 @@ export default function Home() {
     setShowShare(false);
   };
 
+  // Calendar Helper Functions
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1));
+  };
+  const handleNextMonth = () => {
+    setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
+  };
+
+  const renderCalendar = () => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const days = [];
+
+    // Empty cells for days before the 1st
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} style={{ padding: '8px', margin: '2px' }}></div>);
+    }
+
+    // Days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      const isAvailable = availableDates.includes(dateStr);
+      const isSelected = dateStr === currentDate;
+
+      days.push(
+        <div 
+          key={dateStr}
+          onClick={() => {
+            if (isAvailable) {
+              setCurrentDate(dateStr);
+              setShowCalendar(false);
+            }
+          }}
+          style={{
+            padding: '8px',
+            margin: '2px',
+            textAlign: 'center',
+            borderRadius: '6px',
+            cursor: isAvailable ? 'pointer' : 'not-allowed',
+            background: isSelected ? '#0d9488' : (isAvailable ? '#f1f5f9' : '#f8fafc'),
+            color: isSelected ? 'white' : (isAvailable ? '#0f172a' : '#cbd5e1'),
+            fontWeight: isAvailable ? 'bold' : 'normal',
+            border: isAvailable && !isSelected ? '1px solid #cbd5e1' : '1px solid transparent',
+          }}
+        >
+          {i}
+        </div>
+      );
+    }
+    return days;
+  };
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
   const activeImage = pages.find((p) => p.pageNo === currentPage)?.image || '';
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Header */}
+      {/* Top Header */}
       <header className="top-nav">
         <div className="nav-center-group">
           
-          {/* Dynamic Dropdown showing ONLY uploaded dates */}
-          <div style={{ position: 'relative', display: 'inline-flex' }}>
-            <button className="date-btn" style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+          {/* Custom Date Selector */}
+          <div style={{ position: 'relative', display: 'inline-flex' }} ref={calendarRef}>
+            <button className="date-btn" onClick={() => setShowCalendar(!showCalendar)} style={{ position: 'relative', zIndex: 1 }}>
               <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>{currentDate || 'No Papers'}</span>
+              <span>{currentDate || 'Loading...'}</span>
               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M6 9l6 6 6-6"></path>
               </svg>
             </button>
-            <select 
-              value={currentDate}
-              onChange={handleDateChange}
-              style={{
-                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                opacity: 0, cursor: 'pointer', zIndex: 10
-              }}
-            >
-              {availableDates.map(date => (
-                <option key={date} value={date}>{date}</option>
-              ))}
-            </select>
+            
+            {/* Custom Calendar Dropdown */}
+            {showCalendar && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '0',
+                marginTop: '8px',
+                background: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                padding: '12px',
+                zIndex: 100,
+                width: '280px',
+                color: 'black'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', background: '#0d9488', padding: '8px', borderRadius: '6px', color: 'white' }}>
+                  <button onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}>&lt;</button>
+                  <span style={{ fontWeight: 'bold' }}>{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
+                  <button onClick={handleNextMonth} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '18px' }}>&gt;</button>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center', fontWeight: 'bold', fontSize: '12px', marginBottom: '8px' }}>
+                  <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', fontSize: '14px' }}>
+                  {renderCalendar()}
+                </div>
+              </div>
+            )}
           </div>
 
           <button className="share-btn" onClick={() => setShowShare(true)}>
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
             </svg>
             <span>Share</span>
           </button>
