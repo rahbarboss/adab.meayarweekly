@@ -9,65 +9,71 @@ export default function Home() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Start with empty date, will automatically fetch latest from Supabase
+  // Date state khali rakhi hai taaki load hote hi bucket se sabse latest date khud nikal le
   const [currentDate, setCurrentDate] = useState('');
   const [pages, setPages] = useState<Array<{ pageNo: number; image: string }>>([]);
 
-  // 1. Initial Load: Fetch the LATEST uploaded paper automatically
+  // Direct Supabase STORAGE BUCKET se fetch karne ka logic
   useEffect(() => {
-    async function fetchLatestPaper() {
+    async function fetchPapersFromStorage() {
       setIsLoading(true);
       try {
-        const { data } = await supabase
-          .from('newspapers')
-          .select('*')
-          .order('date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // 'newspapers' bucket se saari files ki list nikalna
+        const { data: files, error } = await supabase.storage.from('newspapers').list('', {
+          limit: 1000,
+          sortBy: { column: 'name', order: 'desc' }
+        });
 
-        if (data && data.pages && data.pages.length > 0) {
-          setCurrentDate(data.date);
-          const mapped = data.pages.map((p: any, idx: number) => ({
-            pageNo: p.pageNumber || idx + 1,
-            image: p.imageUrl,
-          }));
-          setPages(mapped);
-          setCurrentPage(1);
+        if (files && files.length > 0) {
+          // Sirf valid pages filter karna
+          const validFiles = files.filter(f => f.name.includes('_page_'));
+
+          if (validFiles.length > 0) {
+            let targetDate = currentDate;
+
+            // Agar koi date select nahi hai, to files me se sabse Latest Date nikalna
+            if (!targetDate) {
+              const dates = validFiles.map(f => f.name.substring(0, 10)); // "2026-09-23"
+              const uniqueDates = Array.from(new Set(dates)).sort().reverse();
+              targetDate = uniqueDates[0];
+              setCurrentDate(targetDate);
+            }
+
+            // Target date wali files filter karna
+            const dateFiles = validFiles.filter(f => f.name.startsWith(targetDate));
+
+            if (dateFiles.length > 0) {
+              const mappedPages = dateFiles.map(f => {
+                // File name se Page Number nikalna
+                const pageMatch = f.name.match(/_page_(\d+)/);
+                const pageNo = pageMatch ? parseInt(pageMatch[1], 10) : 1;
+                
+                // Supabase se image ka public URL nikalna
+                const { data: publicUrlData } = supabase.storage.from('newspapers').getPublicUrl(f.name);
+                
+                return {
+                  pageNo,
+                  image: publicUrlData.publicUrl
+                };
+              });
+
+              // Page 1, Page 2 sequence me sort karna
+              mappedPages.sort((a, b) => a.pageNo - b.pageNo);
+              setPages(mappedPages);
+              setCurrentPage(1);
+            } else {
+              setPages([]); // Agar us date par koi paper na ho
+            }
+          }
         }
-      } catch (err) {}
-      
+      } catch (err) {
+        console.error("Storage fetch error:", err);
+      }
       setTimeout(() => setIsLoading(false), 800);
     }
-    fetchLatestPaper();
-  }, []);
-
-  // 2. Fetch specific paper when user selects a date from calendar
-  const handleDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = e.target.value;
-    setCurrentDate(selectedDate);
-    setIsLoading(true);
     
-    try {
-      const { data } = await supabase
-        .from('newspapers')
-        .select('*')
-        .eq('date', selectedDate)
-        .maybeSingle();
-
-      if (data && data.pages && data.pages.length > 0) {
-        const mapped = data.pages.map((p: any, idx: number) => ({
-          pageNo: p.pageNumber || idx + 1,
-          image: p.imageUrl,
-        }));
-        setPages(mapped);
-        setCurrentPage(1);
-      } else {
-        setPages([]); // Show empty state if no paper is found on this date
-      }
-    } catch (err) {}
-    
-    setTimeout(() => setIsLoading(false), 800);
-  };
+    fetchPapersFromStorage();
+  }, [currentDate]);
 
   const handleShare = (type: string) => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -88,11 +94,11 @@ export default function Home() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Header */}
+      {/* Top Header */}
       <header className="top-nav">
         <div className="nav-center-group">
           
-          {/* Fully Clickable Date Selector */}
+          {/* Working Date Selector */}
           <div style={{ position: 'relative', display: 'inline-flex' }}>
             <button className="date-btn" style={{ position: 'relative', zIndex: 1 }}>
               <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -109,7 +115,7 @@ export default function Home() {
             <input 
               type="date" 
               value={currentDate}
-              onChange={handleDateChange}
+              onChange={(e) => setCurrentDate(e.target.value)}
               style={{
                 position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
                 opacity: 0, cursor: 'pointer', zIndex: 10
@@ -194,7 +200,6 @@ export default function Home() {
             </main>
           </>
         ) : (
-          /* Empty State if no paper exists on selected date */
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: '#64748b', background: '#080f1d' }}>
             <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24" style={{ marginBottom: '16px' }}>
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
