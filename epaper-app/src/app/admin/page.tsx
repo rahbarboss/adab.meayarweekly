@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/data';
-
+import { supabase } from '../../lib/data';
 // Import PDF.js
 import * as pdfjsLib from 'pdfjs-dist';
 // Standard worker setup for Next.js
