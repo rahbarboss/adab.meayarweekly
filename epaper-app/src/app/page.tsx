@@ -17,7 +17,7 @@ export default function Home() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // VIEW TRACKER: Taaki baar-baar refresh karne par fake views na badhein
+  // VIEW TRACKER
   const viewedDates = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -57,13 +57,9 @@ export default function Home() {
               setPages(mappedPages);
               setCurrentPage(1);
 
-              // ==========================================
-              // NEW FEATURE: RECORD VIEW COUNT IN DATABASE
-              // ==========================================
+              // UPDATE VIEWS
               if (!viewedDates.current.has(targetDate)) {
                 viewedDates.current.add(targetDate);
-                
-                // Pehle DB se current views check karein
                 const { data: dbData } = await supabase
                   .from('newspapers')
                   .select('views')
@@ -71,14 +67,11 @@ export default function Home() {
                   .maybeSingle();
                 
                 const currentViews = dbData?.views || 0;
-                
-                // Fir views +1 karke update kar dein
                 await supabase
                   .from('newspapers')
                   .update({ views: currentViews + 1 })
                   .eq('date', targetDate);
               }
-              // ==========================================
             } else {
               setPages([]);
             }
@@ -106,15 +99,50 @@ export default function Home() {
     const url = typeof window !== 'undefined' ? window.location.href : '';
     if (type === 'whatsapp') {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(url)}`, '_blank');
+      setShowShare(false);
     } else if (type === 'facebook') {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-    } else if (type === 'download') {
-      alert('Generating PDF for Download...');
+      setShowShare(false);
     } else if (type === 'copy') {
       navigator.clipboard.writeText(url);
       alert('Link Copied!');
+      setShowShare(false);
+    } else if (type === 'download') {
+      // ==========================================
+      // ASLI PDF DOWNLOAD LOGIC
+      // ==========================================
+      const downloadPDF = async () => {
+        alert('PDF Download start ho gaya hai. Kripya thoda intezaar karein...');
+        try {
+          const { jsPDF } = await import('jspdf');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+
+          for (let i = 0; i < pages.length; i++) {
+            if (i > 0) pdf.addPage();
+            
+            // Supabase se image blob format me fetch karna taaki CORS error na aaye
+            const response = await fetch(pages[i].image);
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+
+            pdf.addImage(base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+          }
+          pdf.save(`Fikr_o_Khayal_${currentDate}.pdf`);
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          alert('PDF Generate karne me error aayi. Please refresh karke try karein.');
+        }
+      };
+      
+      downloadPDF();
+      setShowShare(false); // Modal band kar dein
     }
-    setShowShare(false);
   };
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -286,7 +314,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Share Modal */}
       {showShare && (
         <div className="share-modal-overlay" onClick={() => setShowShare(false)}>
           <div className="share-modal-box" onClick={(e) => e.stopPropagation()}>
