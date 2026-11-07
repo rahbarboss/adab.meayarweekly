@@ -10,7 +10,7 @@ body {
   background-color: #080f1d;
   color: #f8fafc;
   overflow: hidden;
-  height: 100dvh; /* Mobile browser bottom bar support */
+  height: 100dvh;
   width: 100vw;
 }
 
@@ -34,7 +34,6 @@ body {
   gap: 12px;
 }
 
-/* Pills and Buttons */
 .date-btn, .share-btn {
   background: #0d9488;
   color: #ffffff;
@@ -92,7 +91,6 @@ body {
   color: #ffffff;
 }
 
-/* Main Layout */
 .main-viewport {
   display: flex;
   height: calc(100dvh - 64px);
@@ -156,6 +154,7 @@ body {
   justify-content: center;
   transition: transform 0.2s ease-out;
   transform-origin: top center;
+  position: relative;
 }
 
 .paper-display {
@@ -167,7 +166,46 @@ body {
   background: #ffffff;
 }
 
-/* Zoom Controls */
+/* ========================================= */
+/* DYNAMIC SPECIAL EDITION BADGE             */
+/* ========================================= */
+.special-badge-ribbon {
+  position: absolute;
+  top: -15px;
+  left: -25px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #78350f;
+  padding: 12px 28px;
+  font-size: 20px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+  z-index: 50;
+  transform: rotate(-4deg);
+  animation: badgePulse 2s infinite;
+  border: 2px solid #fffbeb;
+  pointer-events: none; /* Badge par click rokne ke liye */
+}
+
+/* 3D Fold Corner Effect */
+.special-badge-ribbon::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 10px;
+  border-width: 8px 10px 0 0;
+  border-style: solid;
+  border-color: #b45309 transparent transparent transparent;
+}
+
+@keyframes badgePulse {
+  0% { transform: rotate(-4deg) scale(1); }
+  50% { transform: rotate(-4deg) scale(1.04); box-shadow: 0 8px 25px rgba(245, 158, 11, 0.7); }
+  100% { transform: rotate(-4deg) scale(1); }
+}
+
 .zoom-controls {
   position: absolute;
   top: 24px;
@@ -190,7 +228,6 @@ body {
 }
 .zoom-btn:hover { background: #0d9488; border-color: #0d9488; }
 
-/* Loader */
 .document-loader {
   display: flex;
   flex-direction: column;
@@ -206,7 +243,6 @@ body {
   100% { transform: scale(0.95); opacity: 0.7; }
 }
 
-/* Share Modal */
 .share-modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.6);
@@ -252,9 +288,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer; z-index: 20;
 }
 
-/* ========================================= */
-/* CUSTOM CALENDAR DROPDOWN STYLING          */
-/* ========================================= */
 .calendar-dropdown {
   position: absolute;
   top: 100%;
@@ -278,9 +311,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 14px;
 }
 
-/* ========================================= */
-/* MOBILE PHONE RESPONSIVENESS FIX           */
-/* ========================================= */
 @media (max-width: 768px) {
   .top-nav {
     padding: 0 4px;
@@ -333,7 +363,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   
   .viewer-area {
-    padding: 12px 8px;
+    padding: 16px 12px;
     align-items: center;
   }
   
@@ -358,16 +388,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     height: 14px;
   }
 
-  /* Fixed Calendar for Mobile */
   .calendar-dropdown {
-    left: 0; /* Align perfectly to the left of the button */
-    transform: none; /* Remove centering shift */
-    width: 250px; /* Thoda chhota size */
+    left: 0;
+    transform: none;
+    width: 250px;
     padding: 10px;
   }
   .cal-day {
-    padding: 6px; /* Chhota padding */
+    padding: 6px;
     margin: 1px;
     font-size: 13px;
+  }
+
+  /* Phone ke liye Badge ko chhota kiya */
+  .special-badge-ribbon {
+    font-size: 15px;
+    padding: 8px 18px;
+    top: -10px;
+    left: -15px;
   }
 }

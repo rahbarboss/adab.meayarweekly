@@ -16,13 +16,15 @@ export default function Home() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
+  
+  const [currentBadge, setCurrentBadge] = useState(''); // STATE FOR BADGE TEXT
 
-  // VIEW TRACKER
   const viewedDates = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchPapersFromStorage() {
       setIsLoading(true);
+      setCurrentBadge(''); // Reset badge loading naye paper ke liye
       try {
         const { data: files, error } = await supabase.storage.from('newspapers').list('', {
           limit: 1000,
@@ -57,15 +59,20 @@ export default function Home() {
               setPages(mappedPages);
               setCurrentPage(1);
 
+              // FETCH VIEWS AND BADGE
+              const { data: dbData } = await supabase
+                .from('newspapers')
+                .select('views, badge_text')
+                .eq('date', targetDate)
+                .maybeSingle();
+              
+              if (dbData?.badge_text) {
+                setCurrentBadge(dbData.badge_text);
+              }
+
               // UPDATE VIEWS
               if (!viewedDates.current.has(targetDate)) {
                 viewedDates.current.add(targetDate);
-                const { data: dbData } = await supabase
-                  .from('newspapers')
-                  .select('views')
-                  .eq('date', targetDate)
-                  .maybeSingle();
-                
                 const currentViews = dbData?.views || 0;
                 await supabase
                   .from('newspapers')
@@ -108,9 +115,6 @@ export default function Home() {
       alert('Link Copied!');
       setShowShare(false);
     } else if (type === 'download') {
-      // ==========================================
-      // ASLI PDF DOWNLOAD LOGIC
-      // ==========================================
       const downloadPDF = async () => {
         alert('PDF Download start ho gaya hai. Kripya thoda intezaar karein...');
         try {
@@ -122,7 +126,6 @@ export default function Home() {
           for (let i = 0; i < pages.length; i++) {
             if (i > 0) pdf.addPage();
             
-            // Supabase se image blob format me fetch karna taaki CORS error na aaye
             const response = await fetch(pages[i].image);
             const blob = await response.blob();
             const base64 = await new Promise<string>((resolve) => {
@@ -139,9 +142,8 @@ export default function Home() {
           alert('PDF Generate karne me error aayi. Please refresh karke try karein.');
         }
       };
-      
       downloadPDF();
-      setShowShare(false); // Modal band kar dein
+      setShowShare(false);
     }
   };
 
@@ -285,6 +287,14 @@ export default function Home() {
             </aside>
             <main className="viewer-area">
               <div className="paper-container" style={{ transform: `scale(${zoomLevel})` }}>
+                
+                {/* YAHAN BADGE DIKHEGA AGAR ADMIN NE KUCH LIKHA HOGA */}
+                {currentBadge && (
+                  <div className="special-badge-ribbon">
+                    ✨ {currentBadge} ✨
+                  </div>
+                )}
+                
                 <img src={activeImage} className="paper-display" alt="Newspaper Page" />
               </div>
               

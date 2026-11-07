@@ -19,6 +19,7 @@ export default function AdminPage() {
     return d.toISOString().split('T')[0];
   });
   
+  const [badgeText, setBadgeText] = useState(''); // NEW STATE FOR BADGE
   const [extractedPages, setExtractedPages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -33,19 +34,16 @@ export default function AdminPage() {
     if (username === 'admin' && password === 'admin@123' || username === 'rahbar786' && password === 'rahbar@786') setIsLoggedIn(true);
   };
 
-  // Fetch Published Dates AND Views
   useEffect(() => {
     async function fetchPublishedDates() {
       if (activeTab === 'calendar' && isLoggedIn) {
         try {
-          // 1. Get dates from Storage Bucket (taaki confirm ho ki file available hai)
           const { data: files } = await supabase.storage.from('newspapers').list('', { limit: 1000 });
           if (files) {
             const dates = files.filter(f => f.name.includes('_page_')).map(f => f.name.substring(0, 10));
             setPublishedDates(Array.from(new Set(dates)));
           }
 
-          // 2. Get views from Database
           const { data: dbData } = await supabase.from('newspapers').select('date, views');
           if (dbData) {
             const vData: Record<string, number> = {};
@@ -115,12 +113,16 @@ export default function AdminPage() {
         if (error) throw error;
       }
       
-      // Update DB entry to ensure the date exists for views counting
-      await supabase.from('newspapers').upsert({ date: publishDate }, { onConflict: 'date' });
+      // UPSERT DATE WITH BADGE TEXT
+      await supabase.from('newspapers').upsert({ 
+        date: publishDate,
+        badge_text: badgeText.trim() 
+      }, { onConflict: 'date' });
 
       setStatusMsg('Newspaper Published Successfully!');
       alert('Newspaper Published Successfully!');
       setExtractedPages([]);
+      setBadgeText(''); // Clear input after publish
     } catch (err: any) {
       console.error(err);
       setStatusMsg(`Upload Failed: ${err.message}`);
@@ -162,15 +164,30 @@ export default function AdminPage() {
           <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '680px', alignSelf: 'flex-start' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#10b981', marginBottom: '20px' }}>📑 Upload E-Paper Edition</h2>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Publish Date</label>
-              <div style={{ background: '#040914', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 16px', position: 'relative' }}>
-                <input 
-                  type="date" 
-                  value={publishDate}
-                  onChange={(e) => setPublishDate(e.target.value)}
-                  style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 'bold', outline: 'none', cursor: 'pointer', zIndex: 10, position: 'relative' }}
-                />
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Publish Date</label>
+                <div style={{ background: '#040914', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 16px', position: 'relative' }}>
+                  <input 
+                    type="date" 
+                    value={publishDate}
+                    onChange={(e) => setPublishDate(e.target.value)}
+                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 'bold', outline: 'none', cursor: 'pointer', zIndex: 10, position: 'relative' }}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', fontWeight: '700', marginBottom: '8px' }}>Special Edition Title (Optional)</label>
+                <div style={{ background: '#040914', border: '1px solid #1e293b', borderRadius: '10px', padding: '10px 16px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Eid Special"
+                    value={badgeText}
+                    onChange={(e) => setBadgeText(e.target.value)}
+                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#fbbf24', fontSize: '15px', fontWeight: 'bold', outline: 'none' }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -272,8 +289,6 @@ export default function AdminPage() {
                             }}
                           >
                             <div>{day}</div>
-                            
-                            {/* NEW: Show Eye Icon and View Count */}
                             {isPublished && (
                               <div style={{ fontSize: '9px', marginTop: '2px', color: '#6ee7b7' }}>👁️ {views}</div>
                             )}
