@@ -23,10 +23,9 @@ export default function AdminPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   
-  // Storage for highlighted calendar dates
   const [publishedDates, setPublishedDates] = useState<string[]>([]);
+  const [viewsData, setViewsData] = useState<Record<string, number>>({});
   
-  // Calendar Year State (2026 to 2030)
   const [selectedYear, setSelectedYear] = useState(2026);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -34,25 +33,35 @@ export default function AdminPage() {
     if (username === 'admin' && password === 'admin@123' || username === 'rahbar786' && password === 'rahbar@786') setIsLoggedIn(true);
   };
 
-  // Fetch published dates for the calendar tab
+  // Fetch Published Dates AND Views
   useEffect(() => {
     async function fetchPublishedDates() {
       if (activeTab === 'calendar' && isLoggedIn) {
         try {
+          // 1. Get dates from Storage Bucket (taaki confirm ho ki file available hai)
           const { data: files } = await supabase.storage.from('newspapers').list('', { limit: 1000 });
           if (files) {
             const dates = files.filter(f => f.name.includes('_page_')).map(f => f.name.substring(0, 10));
             setPublishedDates(Array.from(new Set(dates)));
           }
+
+          // 2. Get views from Database
+          const { data: dbData } = await supabase.from('newspapers').select('date, views');
+          if (dbData) {
+            const vData: Record<string, number> = {};
+            dbData.forEach(item => {
+              vData[item.date] = item.views || 0;
+            });
+            setViewsData(vData);
+          }
         } catch (err) {
-          console.error("Error fetching dates:", err);
+          console.error("Error fetching dates & views:", err);
         }
       }
     }
     fetchPublishedDates();
   }, [activeTab, isLoggedIn]);
 
-  // PDF Extract Logic
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -89,7 +98,6 @@ export default function AdminPage() {
     setIsProcessing(false);
   };
 
-  // Publish to Supabase Logic
   const handlePublish = async () => {
     if (extractedPages.length === 0) return;
     setIsProcessing(true);
@@ -106,6 +114,10 @@ export default function AdminPage() {
           .upload(fileName, blob, { contentType: 'image/jpeg' });
         if (error) throw error;
       }
+      
+      // Update DB entry to ensure the date exists for views counting
+      await supabase.from('newspapers').upsert({ date: publishDate }, { onConflict: 'date' });
+
       setStatusMsg('Newspaper Published Successfully!');
       alert('Newspaper Published Successfully!');
       setExtractedPages([]);
@@ -208,9 +220,8 @@ export default function AdminPage() {
         ) : (
           <div style={{ width: '100%', maxWidth: '1080px' }}>
             <div style={{ background: '#091322', border: '1px solid #1e293b', borderRadius: '16px', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <span style={{ fontSize: '16px', fontWeight: '800' }}>📅 Publication Calendar</span>
+              <span style={{ fontSize: '16px', fontWeight: '800' }}>📅 Publication Calendar & Analytics</span>
               
-              {/* Dynamic Year Selector (2026 to 2030) */}
               <select 
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -224,7 +235,7 @@ export default function AdminPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', paddingBottom: '40px' }}>
               {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, mIndex) => {
-                const year = selectedYear; // Automatically use the selected year
+                const year = selectedYear;
                 const daysInMonth = new Date(year, mIndex + 1, 0).getDate();
                 const firstDayOfMonth = new Date(year, mIndex, 1).getDay();
                 
@@ -234,7 +245,6 @@ export default function AdminPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px' }}>
                       {['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'].map(d => <div key={d} style={{ color: '#475569', fontWeight: 'bold' }}>{d}</div>)}
                       
-                      {/* Empty slots for correct day alignment */}
                       {Array.from({ length: firstDayOfMonth }).map((_, i) => (
                         <div key={`empty-${i}`}></div>
                       ))}
@@ -243,20 +253,30 @@ export default function AdminPage() {
                         const day = dIdx + 1;
                         const dateStr = `${year}-${String(mIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                         const isPublished = publishedDates.includes(dateStr);
+                        const views = viewsData[dateStr] || 0;
                         
                         return (
                           <div 
                             key={day} 
                             style={{ 
-                              padding: '8px 0', 
+                              padding: isPublished ? '4px 0' : '8px 0', 
                               borderRadius: '6px', 
                               background: isPublished ? '#064e3b' : 'transparent', 
                               color: isPublished ? '#a7f3d0' : '#94a3b8',
                               border: isPublished ? '1px solid #10b981' : '1px solid transparent',
-                              fontWeight: isPublished ? 'bold' : 'normal'
+                              fontWeight: isPublished ? 'bold' : 'normal',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center'
                             }}
                           >
-                            {day}
+                            <div>{day}</div>
+                            
+                            {/* NEW: Show Eye Icon and View Count */}
+                            {isPublished && (
+                              <div style={{ fontSize: '9px', marginTop: '2px', color: '#6ee7b7' }}>👁️ {views}</div>
+                            )}
                           </div>
                         );
                       })}

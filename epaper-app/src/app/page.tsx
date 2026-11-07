@@ -17,6 +17,9 @@ export default function Home() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
 
+  // VIEW TRACKER: Taaki baar-baar refresh karne par fake views na badhein
+  const viewedDates = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     async function fetchPapersFromStorage() {
       setIsLoading(true);
@@ -53,6 +56,29 @@ export default function Home() {
               mappedPages.sort((a, b) => a.pageNo - b.pageNo);
               setPages(mappedPages);
               setCurrentPage(1);
+
+              // ==========================================
+              // NEW FEATURE: RECORD VIEW COUNT IN DATABASE
+              // ==========================================
+              if (!viewedDates.current.has(targetDate)) {
+                viewedDates.current.add(targetDate);
+                
+                // Pehle DB se current views check karein
+                const { data: dbData } = await supabase
+                  .from('newspapers')
+                  .select('views')
+                  .eq('date', targetDate)
+                  .maybeSingle();
+                
+                const currentViews = dbData?.views || 0;
+                
+                // Fir views +1 karke update kar dein
+                await supabase
+                  .from('newspapers')
+                  .update({ views: currentViews + 1 })
+                  .eq('date', targetDate);
+              }
+              // ==========================================
             } else {
               setPages([]);
             }
